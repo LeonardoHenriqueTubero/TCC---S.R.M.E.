@@ -1,0 +1,7 @@
+{
+  "name": "srme",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
