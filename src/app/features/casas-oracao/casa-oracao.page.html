@@ -1,0 +1,40 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Casas de Oração</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="10" offset-md="1" size-lg="8" offset-lg="2">
+
+        @if (carregando) {
+          <div class="ion-text-center ion-padding">
+            <ion-spinner></ion-spinner>
+          </div>
+        } @else {
+          <ion-list>
+            @for (casa of casas; track casa.id) {
+              <ion-item>
+                <ion-label>{{ casa.nome }}</ion-label>
+                <ion-note slot="end">{{ casa.cidade }}</ion-note>
+              </ion-item>
+            } @empty {
+              <ion-item>
+                <ion-label>Nenhuma casa de oração cadastrada.</ion-label>
+              </ion-item>
+            }
+          </ion-list>
+        }
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button routerLink="/casas/novo">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

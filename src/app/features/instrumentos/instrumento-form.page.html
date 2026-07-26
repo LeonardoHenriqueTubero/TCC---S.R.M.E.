@@ -1,0 +1,42 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/instrumentos"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Novo instrumento</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="8" offset-md="2" size-lg="6" offset-lg="3">
+
+        <form [formGroup]="form" (ngSubmit)="salvar()">
+          <ion-item>
+            <ion-input formControlName="nome" label="Nome" labelPlacement="stacked" type="text"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-select
+              formControlName="familia"
+              label="Família"
+              labelPlacement="stacked"
+              placeholder="Selecione a família"
+              interface="action-sheet"
+            >
+              @for (familia of familias; track familia) {
+                <ion-select-option [value]="familia">{{ familia }}</ion-select-option>
+              }
+            </ion-select>
+          </ion-item>
+
+          <ion-button expand="block" type="submit" [disabled]="form.invalid" class="ion-margin-top">
+            Salvar
+          </ion-button>
+        </form>
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

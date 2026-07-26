@@ -1,0 +1,46 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Instrumentos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="10" offset-md="1" size-lg="8" offset-lg="2">
+
+        @if (carregando) {
+          <div class="ion-text-center ion-padding">
+            <ion-spinner></ion-spinner>
+          </div>
+        } @else {
+          <ion-list>
+            @for (grupo of grupos; track grupo.familia) {
+              <ion-item-group>
+                <ion-item-divider>
+                  <ion-label>{{ grupo.familia }}</ion-label>
+                </ion-item-divider>
+                @for (instrumento of grupo.instrumentos; track instrumento.id) {
+                  <ion-item>
+                    <ion-label>{{ instrumento.nome }}</ion-label>
+                  </ion-item>
+                }
+              </ion-item-group>
+            } @empty {
+              <ion-item>
+                <ion-label>Nenhum instrumento cadastrado.</ion-label>
+              </ion-item>
+            }
+          </ion-list>
+        }
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button routerLink="/instrumentos/novo">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

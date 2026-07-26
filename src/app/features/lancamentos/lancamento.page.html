@@ -1,0 +1,48 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Lançamentos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="10" offset-md="1" size-lg="8" offset-lg="2">
+
+        @if (carregando) {
+          <div class="ion-text-center ion-padding">
+            <ion-spinner></ion-spinner>
+          </div>
+        } @else {
+          @for (lancamento of lancamentos; track lancamento.id) {
+            <ion-card>
+              <ion-card-header>
+                <ion-card-subtitle>{{ formatarData(lancamento.data) }}</ion-card-subtitle>
+                <ion-card-title>{{ lancamento.nomeEvento }}</ion-card-title>
+                <ion-card-subtitle>{{ lancamento.nomeCasaOracao }}</ion-card-subtitle>
+              </ion-card-header>
+              <ion-card-content>
+                @for (musico of lancamento.musicos; track musico.id) {
+                  <ion-chip>
+                    <ion-label>{{ musico.nome }}</ion-label>
+                  </ion-chip>
+                } @empty {
+                  <p>Nenhum músico neste lançamento.</p>
+                }
+              </ion-card-content>
+            </ion-card>
+          } @empty {
+            <p class="ion-padding">Nenhum lançamento cadastrado.</p>
+          }
+        }
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button routerLink="/lancamentos/novo">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
