@@ -103,9 +103,30 @@ export class Database {
     await this.db.open();
 
     await this.criarTabelas();
+    await this.migrarEsquema();
     await this.semear();
 
     await this.persistir();
+  }
+
+  // O CREATE TABLE IF NOT EXISTS só cria a tabela quando ela ainda não existe —
+  // ele não altera tabelas já criadas. Então um banco gravado antes da coluna
+  // `ativo` existir continuaria sem ela (e as telas quebrariam com
+  // "no such column"). Aqui a coluna é adicionada quando faltar, preservando os
+  // dados já salvos: as linhas antigas assumem o DEFAULT 1, ou seja, ficam ativas.
+  private async migrarEsquema(): Promise<void> {
+    const tabelasComAtivo = ['instrumento', 'casaOracao', 'evento', 'lancamento'];
+
+    for (const tabela of tabelasComAtivo) {
+      if (!(await this.temColuna(tabela, 'ativo'))) {
+        await this.db.execute(`ALTER TABLE ${tabela} ADD COLUMN ativo INTEGER DEFAULT 1;`);
+      }
+    }
+  }
+
+  private async temColuna(tabela: string, coluna: string): Promise<boolean> {
+    const { values } = await this.db.query(`PRAGMA table_info(${tabela});`);
+    return (values ?? []).some((c: { name: string }) => c.name === coluna);
   }
 
   // Percorre a lista de seeds (já na ordem certa de dependências) e insere só
