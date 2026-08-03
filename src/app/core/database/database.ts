@@ -5,6 +5,86 @@ import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacito
 const NOME_BANCO = 'srme';
 const VERSAO_BANCO = 1;
 
+// SQL dos dados iniciais de cada tabela, separado da lógica para o seed ficar
+// fácil de ler e editar. A coluna `ativo` não é preenchida aqui de propósito:
+// a tabela já a define com DEFAULT 1, então todo registro semeado nasce ativo.
+const SEED_INSTRUMENTOS = `
+  INSERT INTO instrumento (nome, familia) VALUES ('Violino', 'Cordas');
+  INSERT INTO instrumento (nome, familia) VALUES ('Viola', 'Cordas');
+  INSERT INTO instrumento (nome, familia) VALUES ('Violoncelo', 'Cordas');
+  INSERT INTO instrumento (nome, familia) VALUES ('Contrabaixo', 'Cordas');
+  INSERT INTO instrumento (nome, familia) VALUES ('Flauta', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Oboé', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Clarinete', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Clarone', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Fagote', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Sax Alto', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Sax Tenor', 'Madeiras');
+  INSERT INTO instrumento (nome, familia) VALUES ('Trompete', 'Metais');
+  INSERT INTO instrumento (nome, familia) VALUES ('Trompa', 'Metais');
+  INSERT INTO instrumento (nome, familia) VALUES ('Trombone', 'Metais');
+  INSERT INTO instrumento (nome, familia) VALUES ('Bombardino', 'Metais');
+  INSERT INTO instrumento (nome, familia) VALUES ('Tuba', 'Metais');
+`;
+
+const SEED_CASAS_ORACAO = `
+  INSERT INTO casaOracao (nome, cidade) VALUES ('Central', 'São Paulo');
+  INSERT INTO casaOracao (nome, cidade) VALUES ('Vila Maria', 'São Paulo');
+  INSERT INTO casaOracao (nome, cidade) VALUES ('Jardim Brasil', 'Guarulhos');
+`;
+
+const SEED_EVENTOS = `
+  INSERT INTO evento (nome) VALUES ('Ensaio Regional');
+  INSERT INTO evento (nome) VALUES ('Ensaio Local');
+  INSERT INTO evento (nome) VALUES ('Reunião de Jovens e Menores');
+  INSERT INTO evento (nome) VALUES ('Culto Oficial');
+  INSERT INTO evento (nome) VALUES ('Santa Ceia');
+`;
+
+// Depende de casaOracao (comum_congregacao) e instrumento já semeados.
+// Os ids batem com a ordem de inserção acima (casas 1-3, instrumentos 1-16).
+const SEED_MUSICOS = `
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('João Silva', 'Sim', 'Sim', 'Músico', 1, 1, 1);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Pedro Santos', 'Sim', 'Sim', 'Instrutor', 1, 1, 12);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Lucas Almeida', 'Não', 'Sim', 'Músico', 1, 2, 7);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Tiago Costa', 'Sim', 'Sim', 'Músico', 1, 2, 5);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('André Souza', 'Sim', 'Sim', 'Encarregado Local', 1, 3, 14);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Rafael Lima', 'Não', 'Não', 'Músico', 1, 3, 10);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Marcos Pereira', 'Sim', 'Sim', 'Músico', 1, 1, 3);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Felipe Rocha', 'Não', 'Não', 'Candidato', 1, 2, 16);
+`;
+
+// Depende de casaOracao (local), evento e musico já semeados.
+// Semeia lancamento e lancamento_musico juntos porque um não faz sentido sem o outro.
+const SEED_LANCAMENTOS = `
+  INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-07', 1, 1);
+  INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-14', 2, 2);
+  INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-21', 3, 4);
+
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 1);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 2);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 3);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 4);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 5);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 7);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 3);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 4);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 8);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (3, 5);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (3, 6);
+`;
+
+// Cada entrada só é inserida se a tabela estiver vazia (o seed é idempotente).
+// A ORDEM importa por causa das chaves estrangeiras: as tabelas referenciadas
+// vêm antes das que dependem delas.
+const SEEDS: { tabela: string; sql: string }[] = [
+  { tabela: 'instrumento', sql: SEED_INSTRUMENTOS },
+  { tabela: 'casaOracao', sql: SEED_CASAS_ORACAO },
+  { tabela: 'evento', sql: SEED_EVENTOS },
+  { tabela: 'musico', sql: SEED_MUSICOS },
+  { tabela: 'lancamento', sql: SEED_LANCAMENTOS },
+];
+
 @Injectable({
   providedIn: 'root',
 })
@@ -28,16 +108,15 @@ export class Database {
     await this.persistir();
   }
 
-  // Ordem importa por causa das chaves estrangeiras: primeiro as tabelas que
-  // ninguém referencia (instrumento, casaOracao, evento), depois musico (que
-  // depende de casaOracao e instrumento), depois lancamento (que depende de
-  // casaOracao e evento) e por fim lancamento_musico (que liga os dois).
+  // Percorre a lista de seeds (já na ordem certa de dependências) e insere só
+  // o que ainda não existe. Toda a repetição que antes ficava em vários métodos
+  // agora está concentrada aqui.
   private async semear(): Promise<void> {
-    await this.semearInstrumentos();
-    await this.semearCasasOracao();
-    await this.semearEventos();
-    await this.semearMusicos();
-    await this.semearLancamentos();
+    for (const { tabela, sql } of SEEDS) {
+      if ((await this.contar(tabela)) === 0) {
+        await this.db.execute(sql);
+      }
+    }
   }
 
   // Retorna quantas linhas a tabela já tem — usado para não semear de novo.
@@ -111,102 +190,6 @@ export class Database {
       );
     `;
     await this.db.execute(sql);
-  }
-
-  private async semearInstrumentos(): Promise<void> {
-    if ((await this.contar('instrumento')) > 0) {
-      return;
-    }
-
-    await this.db.execute(`
-      INSERT INTO instrumento (nome, familia) VALUES ('Violino', 'Cordas');
-      INSERT INTO instrumento (nome, familia) VALUES ('Viola', 'Cordas');
-      INSERT INTO instrumento (nome, familia) VALUES ('Violoncelo', 'Cordas');
-      INSERT INTO instrumento (nome, familia) VALUES ('Contrabaixo', 'Cordas');
-      INSERT INTO instrumento (nome, familia) VALUES ('Flauta', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Oboé', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Clarinete', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Clarone', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Fagote', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Sax Alto', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Sax Tenor', 'Madeiras');
-      INSERT INTO instrumento (nome, familia) VALUES ('Trompete', 'Metais');
-      INSERT INTO instrumento (nome, familia) VALUES ('Trompa', 'Metais');
-      INSERT INTO instrumento (nome, familia) VALUES ('Trombone', 'Metais');
-      INSERT INTO instrumento (nome, familia) VALUES ('Bombardino', 'Metais');
-      INSERT INTO instrumento (nome, familia) VALUES ('Tuba', 'Metais');
-    `);
-  }
-
-  private async semearCasasOracao(): Promise<void> {
-    if ((await this.contar('casaOracao')) > 0) {
-      return;
-    }
-
-    await this.db.execute(`
-      INSERT INTO casaOracao (nome, cidade) VALUES ('Central', 'São Paulo');
-      INSERT INTO casaOracao (nome, cidade) VALUES ('Vila Maria', 'São Paulo');
-      INSERT INTO casaOracao (nome, cidade) VALUES ('Jardim Brasil', 'Guarulhos');
-    `);
-  }
-
-  private async semearEventos(): Promise<void> {
-    if ((await this.contar('evento')) > 0) {
-      return;
-    }
-
-    await this.db.execute(`
-      INSERT INTO evento (nome) VALUES ('Ensaio Regional');
-      INSERT INTO evento (nome) VALUES ('Ensaio Local');
-      INSERT INTO evento (nome) VALUES ('Reunião de Jovens e Menores');
-      INSERT INTO evento (nome) VALUES ('Culto Oficial');
-      INSERT INTO evento (nome) VALUES ('Santa Ceia');
-    `);
-  }
-
-  // Depende de casaOracao (comum_congregacao) e instrumento já semeados.
-  // Os ids abaixo batem com a ordem de inserção acima (casas 1-3, instrumentos 1-16).
-  private async semearMusicos(): Promise<void> {
-    if ((await this.contar('musico')) > 0) {
-      return;
-    }
-
-    await this.db.execute(`
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('João Silva', 'Sim', 'Sim', 'Músico', 1, 1, 1);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Pedro Santos', 'Sim', 'Sim', 'Instrutor', 1, 1, 12);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Lucas Almeida', 'Não', 'Sim', 'Músico', 1, 2, 7);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Tiago Costa', 'Sim', 'Sim', 'Músico', 1, 2, 5);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('André Souza', 'Sim', 'Sim', 'Encarregado Local', 1, 3, 14);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Rafael Lima', 'Não', 'Não', 'Músico', 1, 3, 10);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Marcos Pereira', 'Sim', 'Sim', 'Músico', 1, 1, 3);
-      INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Felipe Rocha', 'Não', 'Não', 'Candidato', 1, 2, 16);
-    `);
-  }
-
-  // Depende de casaOracao (local), evento e musico já semeados.
-  // Semeia lancamento e lancamento_musico juntos porque um não faz sentido sem o outro.
-  private async semearLancamentos(): Promise<void> {
-    if ((await this.contar('lancamento')) > 0) {
-      return;
-    }
-
-    await this.db.execute(`
-      INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-07', 1, 1);
-      INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-14', 2, 2);
-      INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-21', 3, 4);
-
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 1);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 2);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 3);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 4);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 5);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 7);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 3);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 4);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 8);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (3, 5);
-      INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (3, 6);
-    `);
   }
 
   async persistir(): Promise<void> {
