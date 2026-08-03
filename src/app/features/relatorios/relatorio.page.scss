@@ -1,0 +1,6 @@
+// ion-note é inline por padrão; como aqui ele é uma legenda da lista inteira,
+// precisa ocupar a linha toda para o ion-text-center funcionar.
+.aviso {
+  display: block;
+  font-size: 0.8rem;
+}

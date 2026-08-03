@@ -1,0 +1,14 @@
+// Com seis abas os rótulos não cabem em celulares estreitos: no padrão do
+// Ionic (fonte 12px) a barra pede 420px e estoura numa tela de 360px, cortando
+// "Músicos" e "Relatórios". Só nas telas pequenas apertamos a fonte e o recuo
+// lateral; a partir daí volta tudo ao padrão.
+@media (max-width: 480px) {
+  ion-tab-button {
+    --padding-start: 2px;
+    --padding-end: 2px;
+
+    ion-label {
+      font-size: 10px;
+    }
+  }
+}

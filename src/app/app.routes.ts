@@ -30,6 +30,11 @@ export const routes: Routes = [
           import('./features/lancamentos/lancamento.page').then((m) => m.LancamentoPage),
       },
       {
+        path: 'relatorios',
+        loadComponent: () =>
+          import('./features/relatorios/relatorio.page').then((m) => m.RelatorioPage),
+      },
+      {
         path: '',
         redirectTo: 'musicos',
         pathMatch: 'full',

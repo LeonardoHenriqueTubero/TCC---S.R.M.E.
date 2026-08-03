@@ -1,0 +1,42 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Relatórios</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="10" offset-md="1" size-lg="8" offset-lg="2">
+
+        <ion-list>
+          <ion-list-header>
+            <ion-label>Escolha um relatório para gerar em PDF</ion-label>
+          </ion-list-header>
+
+          @for (opcao of opcoes; track opcao.id) {
+            <!-- O item inteiro é clicável e o ícone da direita é só decorativo,
+                 então não há botão dentro de área clicável. -->
+            <ion-item button [disabled]="gerando !== null" (click)="gerar(opcao)">
+              <ion-icon slot="start" [name]="opcao.icone" color="primary"></ion-icon>
+              <ion-label class="ion-text-wrap">
+                <h2>{{ opcao.titulo }}</h2>
+                <p>{{ opcao.descricao }}</p>
+              </ion-label>
+              @if (gerando === opcao.id) {
+                <ion-spinner slot="end"></ion-spinner>
+              } @else {
+                <ion-icon slot="end" name="download-outline" color="medium"></ion-icon>
+              }
+            </ion-item>
+          }
+        </ion-list>
+
+        <ion-note class="ion-padding ion-text-center aviso">
+          Os relatórios usam apenas os dados ativos; registros excluídos não aparecem.
+        </ion-note>
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
