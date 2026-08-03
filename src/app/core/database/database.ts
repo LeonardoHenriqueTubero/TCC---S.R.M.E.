@@ -62,18 +62,21 @@ export class Database {
       CREATE TABLE IF NOT EXISTS instrumento (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome VARCHAR(50) NOT NULL,
-        familia VARCHAR(30) NOT NULL
+        familia VARCHAR(30) NOT NULL,
+        ativo INTEGER DEFAULT 1
       );
 
       CREATE TABLE IF NOT EXISTS casaOracao (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome VARCHAR(100) NOT NULL,
-        cidade VARCHAR(50) NOT NULL
+        cidade VARCHAR(50) NOT NULL,
+        ativo INTEGER DEFAULT 1
       );
 
       CREATE TABLE IF NOT EXISTS evento (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome VARCHAR (100) NOT NULL
+        nome VARCHAR (100) NOT NULL,
+        ativo INTEGER DEFAULT 1
       );
 
       CREATE TABLE IF NOT EXISTS musico (
@@ -94,6 +97,7 @@ export class Database {
         data TEXT NOT NULL,
         local INTEGER,
         evento INTEGER,
+        ativo INTEGER DEFAULT 1,
         FOREIGN KEY (local) REFERENCES casaOracao(id),
         FOREIGN KEY (evento) REFERENCES evento(id)
       );

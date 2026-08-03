@@ -13,7 +13,8 @@ export class CasaOracaoService {
     return (resultado.values ?? []) as CasaOracao[];
   }
 
-  async criar(casa: CasaOracao): Promise<void> {
+  // Omit de id (autoincremento) e ativo (nasce 1 pelo DEFAULT da tabela).
+  async criar(casa: Omit<CasaOracao, 'id' | 'ativo'>): Promise<void> {
     await this.dbService
       .getConexao()
       .run('INSERT INTO casaOracao (nome, cidade) VALUES (?, ?)', [casa.nome, casa.cidade]);

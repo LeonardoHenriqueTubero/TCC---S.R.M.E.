@@ -13,7 +13,8 @@ export class EventoService {
     return (resultado.values ?? []) as Evento[];
   }
 
-  async criar(evento: Evento): Promise<void> {
+  // Omit de id (autoincremento) e ativo (nasce 1 pelo DEFAULT da tabela).
+  async criar(evento: Omit<Evento, 'id' | 'ativo'>): Promise<void> {
     await this.dbService.getConexao().run('INSERT INTO evento (nome) VALUES (?)', [evento.nome]);
     await this.dbService.persistir();
   }

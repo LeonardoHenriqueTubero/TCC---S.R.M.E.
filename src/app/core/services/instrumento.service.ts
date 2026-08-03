@@ -16,7 +16,8 @@ export class InstrumentoService {
     return (resultado.values ?? []) as Instrumento[];
   }
 
-  async criar(instrumento: Instrumento): Promise<void> {
+  // Omit de id (autoincremento) e ativo (nasce 1 pelo DEFAULT da tabela).
+  async criar(instrumento: Omit<Instrumento, 'id' | 'ativo'>): Promise<void> {
     await this.dbService
       .getConexao()
       .run('INSERT INTO instrumento (nome, familia) VALUES (?, ?)', [

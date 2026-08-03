@@ -1,5 +1,6 @@
 export interface CasaOracao {
     id?: number,
     nome: string,
-    cidade: string
+    cidade: string,
+    ativo: boolean
 }

@@ -3,4 +3,5 @@ export interface Lancamento {
     data: string,
     local: number,
     evento: number,
+    ativo: boolean
 }

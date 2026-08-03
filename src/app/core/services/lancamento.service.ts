@@ -53,7 +53,8 @@ export class LancamentoService {
   // Cria o lançamento e, em seguida, liga cada músico selecionado a ele na
   // tabela lancamento_musico. O id do lançamento recém-inserido vem do lastId
   // retornado pelo run() do INSERT.
-  async criar(lancamento: Lancamento, musicoIds: number[]): Promise<void> {
+  // Omit de id (autoincremento) e ativo (nasce 1 pelo DEFAULT da tabela).
+  async criar(lancamento: Omit<Lancamento, 'id' | 'ativo'>, musicoIds: number[]): Promise<void> {
     const conexao = this.dbService.getConexao();
 
     const resultado = await conexao.run(

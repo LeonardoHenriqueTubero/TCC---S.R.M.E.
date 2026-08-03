@@ -1,4 +1,5 @@
 export interface Evento {
     id?: number,
-    nome: string
+    nome: string,
+    ativo: boolean
 }
