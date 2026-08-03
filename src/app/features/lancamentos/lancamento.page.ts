@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader,
@@ -20,10 +20,10 @@ import {
   IonFabButton,
   IonIcon,
   IonButton,
-  ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
+import { Database } from '../../core/database/database';
 import { LancamentoService } from '../../core/services/lancamento.service';
 import { LancamentoComMusicos } from '../../core/models/lancamento-musico.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
@@ -57,15 +57,23 @@ addIcons({ addOutline, createOutline, trashOutline });
     IonButton,
   ],
 })
-export class LancamentoPage implements ViewWillEnter {
+export class LancamentoPage {
   private readonly lancamentoService = inject(LancamentoService);
   private readonly confirmacao = inject(ConfirmacaoService);
+  private readonly database = inject(Database);
 
   lancamentos: LancamentoComMusicos[] = [];
   carregando = true;
 
-  ionViewWillEnter(): void {
-    this.carregar();
+  constructor() {
+    // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
+    // no banco (criar/editar/excluir, aqui ou em outra tela). Isso também cobre
+    // mudanças indiretas: renomear um evento ou uma casa muda o que os cards
+    // desta lista exibem.
+    effect(() => {
+      this.database.versaoDados();
+      this.carregar();
+    });
   }
 
   async carregar(): Promise<void> {

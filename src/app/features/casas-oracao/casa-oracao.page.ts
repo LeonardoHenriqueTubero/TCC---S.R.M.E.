@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader,
@@ -17,10 +17,10 @@ import {
   IonFabButton,
   IonIcon,
   IonButton,
-  ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
+import { Database } from '../../core/database/database';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
 import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
@@ -50,15 +50,23 @@ addIcons({ addOutline, createOutline, trashOutline });
     IonButton,
   ],
 })
-export class CasaOracaoPage implements ViewWillEnter {
+export class CasaOracaoPage {
   private readonly casaOracaoService = inject(CasaOracaoService);
   private readonly confirmacao = inject(ConfirmacaoService);
+  private readonly database = inject(Database);
 
   casas: CasaOracao[] = [];
   carregando = true;
 
-  ionViewWillEnter(): void {
-    this.carregar();
+  constructor() {
+    // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
+    // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
+    // ficaria desatualizada até recarregar a página, porque o Ionic mantém as
+    // páginas de aba vivas e o ionViewWillEnter não dispara de novo.
+    effect(() => {
+      this.database.versaoDados();
+      this.carregar();
+    });
   }
 
   async carregar(): Promise<void> {

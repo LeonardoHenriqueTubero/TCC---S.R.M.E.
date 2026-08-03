@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader,
@@ -16,10 +16,10 @@ import {
   IonFab,
   IonFabButton,
   IonSpinner,
-  ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
+import { Database } from '../../../core/database/database';
 import { MusicoService } from '../../../core/services/musico.service';
 import { Musico } from '../../../core/models/musico.model';
 import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
@@ -49,18 +49,23 @@ addIcons({ addOutline, createOutline, trashOutline });
     IonSpinner,
   ],
 })
-export class MusicoListaPage implements ViewWillEnter {
+export class MusicoListaPage {
   private readonly musicoService = inject(MusicoService);
   private readonly confirmacao = inject(ConfirmacaoService);
+  private readonly database = inject(Database);
 
   musicos: Musico[] = [];
   carregando = true;
 
-  // ionViewWillEnter (não ngOnInit) porque essa página precisa recarregar a
-  // lista toda vez que o usuário volta pra ela (ex: depois de criar/editar um
-  // músico), não só na primeira vez que o componente é construído.
-  ionViewWillEnter(): void {
-    this.carregarMusicos();
+  constructor() {
+    // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
+    // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
+    // ficaria desatualizada até recarregar a página, porque o Ionic mantém as
+    // páginas de aba vivas e o ionViewWillEnter não dispara de novo.
+    effect(() => {
+      this.database.versaoDados();
+      this.carregarMusicos();
+    });
   }
 
   async carregarMusicos(): Promise<void> {

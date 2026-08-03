@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   IonHeader,
@@ -18,10 +18,10 @@ import {
   IonFabButton,
   IonIcon,
   IonButton,
-  ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
+import { Database } from '../../core/database/database';
 import { InstrumentoService } from '../../core/services/instrumento.service';
 import { Instrumento } from '../../core/models/instrumento.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
@@ -57,15 +57,23 @@ interface GrupoInstrumentos {
     IonButton,
   ],
 })
-export class InstrumentoPage implements ViewWillEnter {
+export class InstrumentoPage {
   private readonly instrumentoService = inject(InstrumentoService);
   private readonly confirmacao = inject(ConfirmacaoService);
+  private readonly database = inject(Database);
 
   grupos: GrupoInstrumentos[] = [];
   carregando = true;
 
-  ionViewWillEnter(): void {
-    this.carregar();
+  constructor() {
+    // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
+    // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
+    // ficaria desatualizada até recarregar a página, porque o Ionic mantém as
+    // páginas de aba vivas e o ionViewWillEnter não dispara de novo.
+    effect(() => {
+      this.database.versaoDados();
+      this.carregar();
+    });
   }
 
   async carregar(): Promise<void> {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 
@@ -92,6 +92,12 @@ export class Database {
   private sqlite: SQLiteConnection = new SQLiteConnection(CapacitorSQLite);
   private db!: SQLiteDBConnection;
   private plataforma: string = Capacitor.getPlatform();
+
+  // Contador que aumenta a cada gravação no banco. As telas de listagem
+  // observam este sinal para se recarregarem sozinhas quando algo é criado,
+  // editado ou excluído — sem precisar recarregar a página.
+  private readonly _versaoDados = signal(0);
+  readonly versaoDados = this._versaoDados.asReadonly();
 
   async iniciar(): Promise<void> {
     if (this.plataforma === 'web' || this.plataforma === 'electron') {
@@ -213,10 +219,14 @@ export class Database {
     await this.db.execute(sql);
   }
 
+  // Chamado por todo serviço depois de gravar algo. Além de salvar no
+  // IndexedDB (web/electron), avisa as telas de que os dados mudaram.
   async persistir(): Promise<void> {
     if (this.plataforma === 'web' || this.plataforma === 'electron') {
       await this.sqlite.saveToStore(NOME_BANCO);
     }
+
+    this._versaoDados.update((versao) => versao + 1);
   }
 
   getConexao(): SQLiteDBConnection {
