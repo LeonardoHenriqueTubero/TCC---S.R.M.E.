@@ -54,7 +54,17 @@ export const routes: Routes = [
       import('./features/instrumentos/instrumento-form.page').then((m) => m.InstrumentoFormPage),
   },
   {
+    path: 'instrumentos/:id/editar',
+    loadComponent: () =>
+      import('./features/instrumentos/instrumento-form.page').then((m) => m.InstrumentoFormPage),
+  },
+  {
     path: 'casas/novo',
+    loadComponent: () =>
+      import('./features/casas-oracao/casa-oracao-form.page').then((m) => m.CasaOracaoFormPage),
+  },
+  {
+    path: 'casas/:id/editar',
     loadComponent: () =>
       import('./features/casas-oracao/casa-oracao-form.page').then((m) => m.CasaOracaoFormPage),
   },
@@ -63,7 +73,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/eventos/evento-form.page').then((m) => m.EventoFormPage),
   },
   {
+    path: 'eventos/:id/editar',
+    loadComponent: () => import('./features/eventos/evento-form.page').then((m) => m.EventoFormPage),
+  },
+  {
     path: 'lancamentos/novo',
+    loadComponent: () =>
+      import('./features/lancamentos/lancamento-form.page').then((m) => m.LancamentoFormPage),
+  },
+  {
+    path: 'lancamentos/:id/editar',
     loadComponent: () =>
       import('./features/lancamentos/lancamento-form.page').then((m) => m.LancamentoFormPage),
   },

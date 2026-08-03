@@ -16,8 +16,16 @@
         } @else {
           <ion-list>
             @for (evento of eventos; track evento.id) {
+              <!-- Os botões ficam soltos no item (o item em si não é clicável):
+                   botão dentro de item clicável faz o clique disparar os dois. -->
               <ion-item>
                 <ion-label>{{ evento.nome }}</ion-label>
+                <ion-button slot="end" fill="clear" [routerLink]="['/eventos', evento.id, 'editar']">
+                  <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+                </ion-button>
+                <ion-button slot="end" fill="clear" color="danger" (click)="excluir(evento)">
+                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
               </ion-item>
             } @empty {
               <ion-item>

@@ -11,9 +11,7 @@ import {
   IonList,
   IonItem,
   IonLabel,
-  IonItemSliding,
-  IonItemOptions,
-  IonItemOption,
+  IonButton,
   IonIcon,
   IonFab,
   IonFabButton,
@@ -21,11 +19,12 @@ import {
   ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, trashOutline } from 'ionicons/icons';
+import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
 import { MusicoService } from '../../../core/services/musico.service';
 import { Musico } from '../../../core/models/musico.model';
+import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
 
-addIcons({ addOutline, trashOutline });
+addIcons({ addOutline, createOutline, trashOutline });
 
 @Component({
   selector: 'app-musico-lista',
@@ -43,9 +42,7 @@ addIcons({ addOutline, trashOutline });
     IonList,
     IonItem,
     IonLabel,
-    IonItemSliding,
-    IonItemOptions,
-    IonItemOption,
+    IonButton,
     IonIcon,
     IonFab,
     IonFabButton,
@@ -54,6 +51,7 @@ addIcons({ addOutline, trashOutline });
 })
 export class MusicoListaPage implements ViewWillEnter {
   private readonly musicoService = inject(MusicoService);
+  private readonly confirmacao = inject(ConfirmacaoService);
 
   musicos: Musico[] = [];
   carregando = true;
@@ -71,8 +69,15 @@ export class MusicoListaPage implements ViewWillEnter {
     this.carregando = false;
   }
 
+  // Pergunta antes de excluir; a exclusão é lógica (marca ativo = 0), então o
+  // registro apenas some da lista.
   async excluir(musico: Musico): Promise<void> {
     if (musico.id === undefined) {
+      return;
+    }
+
+    const confirmado = await this.confirmacao.confirmarExclusao(`o músico "${musico.nome}"`);
+    if (!confirmado) {
       return;
     }
 

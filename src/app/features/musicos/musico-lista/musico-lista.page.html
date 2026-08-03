@@ -16,19 +16,20 @@
         } @else {
           <ion-list>
             @for (musico of musicos; track musico.id) {
-              <ion-item-sliding>
-                <ion-item [routerLink]="['/musicos', musico.id, 'editar']" button detail="true">
-                  <ion-label>
-                    <h2>{{ musico.nome }}</h2>
-                    <p>{{ musico.cargo }}</p>
-                  </ion-label>
-                </ion-item>
-                <ion-item-options side="end">
-                  <ion-item-option color="danger" (click)="excluir(musico)">
-                    <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-                  </ion-item-option>
-                </ion-item-options>
-              </ion-item-sliding>
+              <!-- Os botões ficam soltos no item (o item em si não é clicável):
+                   botão dentro de item clicável faz o clique disparar os dois. -->
+              <ion-item>
+                <ion-label>
+                  <h2>{{ musico.nome }}</h2>
+                  <p>{{ musico.cargo }}</p>
+                </ion-label>
+                <ion-button slot="end" fill="clear" [routerLink]="['/musicos', musico.id, 'editar']">
+                  <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+                </ion-button>
+                <ion-button slot="end" fill="clear" color="danger" (click)="excluir(musico)">
+                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
+              </ion-item>
             } @empty {
               <ion-item>
                 <ion-label>Nenhum músico cadastrado ainda.</ion-label>

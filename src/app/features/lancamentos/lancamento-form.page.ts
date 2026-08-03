@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonHeader,
   IonToolbar,
@@ -22,7 +22,6 @@ import {
   IonCheckbox,
   IonNote,
   IonButton,
-  ViewWillEnter,
 } from '@ionic/angular/standalone';
 import { LancamentoService } from '../../core/services/lancamento.service';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
@@ -59,12 +58,13 @@ import { Musico } from '../../core/models/musico.model';
     IonButton,
   ],
 })
-export class LancamentoFormPage implements ViewWillEnter {
+export class LancamentoFormPage implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly lancamentoService = inject(LancamentoService);
   private readonly casaOracaoService = inject(CasaOracaoService);
   private readonly eventoService = inject(EventoService);
   private readonly musicoService = inject(MusicoService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   casas: CasaOracao[] = [];
@@ -75,6 +75,9 @@ export class LancamentoFormPage implements ViewWillEnter {
   termoBusca = '';
   musicosSelecionados: number[] = [];
 
+  modoEdicao = false;
+  private lancamentoId?: number;
+
   form = this.formBuilder.nonNullable.group({
     data: ['', Validators.required],
     // 0 = nada escolhido; min(1) segura o formulário até selecionar de verdade.
@@ -82,10 +85,26 @@ export class LancamentoFormPage implements ViewWillEnter {
     evento: [0, [Validators.required, Validators.min(1)]],
   });
 
-  async ionViewWillEnter(): Promise<void> {
+  async ngOnInit(): Promise<void> {
     this.casas = await this.casaOracaoService.listarTodos();
     this.eventos = await this.eventoService.listarTodos();
     this.musicos = await this.musicoService.listarTodos();
+
+    // A mesma página atende /lancamentos/novo e /lancamentos/:id/editar.
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) {
+      return;
+    }
+
+    this.modoEdicao = true;
+    this.lancamentoId = Number(idParam);
+
+    const lancamento = await this.lancamentoService.buscarPorId(this.lancamentoId);
+    if (lancamento) {
+      this.form.patchValue(lancamento);
+      // Remarca os checkboxes dos músicos que já estavam no lançamento.
+      this.musicosSelecionados = await this.lancamentoService.listarMusicoIds(this.lancamentoId);
+    }
   }
 
   // Filtra a lista de músicos pelo texto da busca (ignora maiúsculas/acentos simples).
@@ -119,7 +138,14 @@ export class LancamentoFormPage implements ViewWillEnter {
       return;
     }
 
-    await this.lancamentoService.criar(this.form.getRawValue(), this.musicosSelecionados);
+    const valores = this.form.getRawValue();
+
+    if (this.modoEdicao && this.lancamentoId !== undefined) {
+      await this.lancamentoService.atualizar(this.lancamentoId, valores, this.musicosSelecionados);
+    } else {
+      await this.lancamentoService.criar(valores, this.musicosSelecionados);
+    }
+
     this.router.navigateByUrl('/tabs/lancamentos');
   }
 }

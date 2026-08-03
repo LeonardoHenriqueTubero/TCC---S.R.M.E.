@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   IonHeader,
   IonToolbar,
@@ -40,25 +40,53 @@ import { InstrumentoService } from '../../core/services/instrumento.service';
     IonButton,
   ],
 })
-export class InstrumentoFormPage {
+export class InstrumentoFormPage implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly instrumentoService = inject(InstrumentoService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   // As famílias são fixas (as mesmas usadas no seed), então ficam direto aqui.
   readonly familias = ['Cordas', 'Madeiras', 'Metais'];
+
+  modoEdicao = false;
+  private instrumentoId?: number;
 
   form = this.formBuilder.nonNullable.group({
     nome: ['', Validators.required],
     familia: ['', Validators.required],
   });
 
+  async ngOnInit(): Promise<void> {
+    // A mesma página atende /instrumentos/novo e /instrumentos/:id/editar.
+    // Com o parâmetro :id, buscamos o registro e preenchemos o formulário.
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) {
+      return;
+    }
+
+    this.modoEdicao = true;
+    this.instrumentoId = Number(idParam);
+
+    const instrumento = await this.instrumentoService.buscarPorId(this.instrumentoId);
+    if (instrumento) {
+      this.form.patchValue(instrumento);
+    }
+  }
+
   async salvar(): Promise<void> {
     if (this.form.invalid) {
       return;
     }
 
-    await this.instrumentoService.criar(this.form.getRawValue());
+    const valores = this.form.getRawValue();
+
+    if (this.modoEdicao && this.instrumentoId !== undefined) {
+      await this.instrumentoService.atualizar(this.instrumentoId, valores);
+    } else {
+      await this.instrumentoService.criar(valores);
+    }
+
     this.router.navigateByUrl('/tabs/instrumentos');
   }
 }

@@ -12,9 +12,7 @@ import {
   IonRow,
   IonCol,
   IonItem,
-  IonLabel,
   IonInput,
-  IonToggle,
   IonButton,
   IonSelect,
   IonSelectOption,
@@ -41,9 +39,7 @@ import { Instrumento } from '../../../core/models/instrumento.model';
     IonRow,
     IonCol,
     IonItem,
-    IonLabel,
     IonInput,
-    IonToggle,
     IonButton,
     IonSelect,
     IonSelectOption,
@@ -64,12 +60,13 @@ export class MusicoFormPage implements OnInit {
   modoEdicao = false;
   private musicoId?: number;
 
+  // Não há campo "ativo" aqui: todo músico novo nasce ativo, e a exclusão
+  // (que marca ativo = 0) é feita pela lista, não por este formulário.
   form = this.formBuilder.nonNullable.group({
     nome: ['', Validators.required],
     oficializado: [''],
     batizado: [''],
     cargo: ['', Validators.required],
-    ativo: [true],
     // Começam em 0 (nenhuma opção tem id 0), então o Validators.min(1) mantém
     // o formulário inválido até o usuário escolher uma casa/instrumento reais
     // nos <ion-select>. O valor guardado é o id da casa/instrumento.
@@ -82,18 +79,21 @@ export class MusicoFormPage implements OnInit {
     this.casas = await this.casaOracaoService.listarTodos();
     this.instrumentos = await this.instrumentoService.listarTodos();
 
+    // A mesma página atende /musicos/novo e /musicos/:id/editar. Com o
+    // parâmetro :id, buscamos o registro e preenchemos o formulário.
     const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) {
+      return;
+    }
 
-    if (idParam) {
-      this.modoEdicao = true;
-      this.musicoId = Number(idParam);
+    this.modoEdicao = true;
+    this.musicoId = Number(idParam);
 
-      // TODO (exercício): carregar o músico existente e preencher o formulário.
-      // Mesmo padrão do salvar() abaixo, só que buscando os dados:
-      //   const musico = await this.musicoService.buscarPorId(this.musicoId);
-      //   if (musico) this.form.patchValue(musico);
-      // Repare que patchValue aceita objeto parcial, então dá pra passar o
-      // Musico inteiro mesmo ele tendo o campo "id" que o form não possui.
+    const musico = await this.musicoService.buscarPorId(this.musicoId);
+    if (musico) {
+      // patchValue aceita objeto parcial, então dá para passar o Musico inteiro
+      // mesmo ele tendo campos (id, ativo) que o formulário não possui.
+      this.form.patchValue(musico);
     }
   }
 
@@ -105,11 +105,11 @@ export class MusicoFormPage implements OnInit {
     const valores = this.form.getRawValue();
 
     if (this.modoEdicao && this.musicoId !== undefined) {
-      // TODO (exercício): chamar musicoService.atualizar({ id: this.musicoId, ...valores })
-      return;
+      await this.musicoService.atualizar(this.musicoId, valores);
+    } else {
+      await this.musicoService.criar(valores);
     }
 
-    await this.musicoService.criar(valores);
     this.router.navigateByUrl('/tabs/musicos');
   }
 }

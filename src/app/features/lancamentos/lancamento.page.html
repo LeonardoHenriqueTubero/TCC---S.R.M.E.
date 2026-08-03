@@ -29,6 +29,21 @@
                 } @empty {
                   <p>Nenhum músico neste lançamento.</p>
                 }
+
+                <div class="acoes">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    [routerLink]="['/lancamentos', lancamento.id, 'editar']"
+                  >
+                    <ion-icon slot="start" name="create-outline"></ion-icon>
+                    Editar
+                  </ion-button>
+                  <ion-button fill="clear" size="small" color="danger" (click)="excluir(lancamento)">
+                    <ion-icon slot="start" name="trash-outline"></ion-icon>
+                    Excluir
+                  </ion-button>
+                </div>
               </ion-card-content>
             </ion-card>
           } @empty {

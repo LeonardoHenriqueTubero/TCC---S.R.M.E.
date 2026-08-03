@@ -16,9 +16,17 @@
         } @else {
           <ion-list>
             @for (casa of casas; track casa.id) {
+              <!-- Os botões ficam soltos no item (o item em si não é clicável):
+                   botão dentro de item clicável faz o clique disparar os dois. -->
               <ion-item>
                 <ion-label>{{ casa.nome }}</ion-label>
                 <ion-note slot="end">{{ casa.cidade }}</ion-note>
+                <ion-button slot="end" fill="clear" [routerLink]="['/casas', casa.id, 'editar']">
+                  <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+                </ion-button>
+                <ion-button slot="end" fill="clear" color="danger" (click)="excluir(casa)">
+                  <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                </ion-button>
               </ion-item>
             } @empty {
               <ion-item>

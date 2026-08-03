@@ -35,3 +35,12 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+/**
+ * Botão de confirmação destrutiva do ConfirmacaoService.
+ * Precisa ficar aqui (e não no componente) porque o ion-alert é renderizado
+ * fora da árvore da página que o abriu.
+ */
+.alerta-perigo {
+  color: var(--ion-color-danger);
+}

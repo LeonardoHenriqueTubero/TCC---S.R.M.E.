@@ -21,8 +21,20 @@
                   <ion-label>{{ grupo.familia }}</ion-label>
                 </ion-item-divider>
                 @for (instrumento of grupo.instrumentos; track instrumento.id) {
+                  <!-- Os botões ficam soltos no item (o item em si não é clicável):
+                       botão dentro de item clicável faz o clique disparar os dois. -->
                   <ion-item>
                     <ion-label>{{ instrumento.nome }}</ion-label>
+                    <ion-button
+                      slot="end"
+                      fill="clear"
+                      [routerLink]="['/instrumentos', instrumento.id, 'editar']"
+                    >
+                      <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+                    </ion-button>
+                    <ion-button slot="end" fill="clear" color="danger" (click)="excluir(instrumento)">
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-button>
                   </ion-item>
                 }
               </ion-item-group>

@@ -14,23 +14,19 @@
 
         <form [formGroup]="form" (ngSubmit)="salvar()">
           <ion-item>
-            <ion-label position="stacked">Nome</ion-label>
-            <ion-input formControlName="nome" type="text"></ion-input>
+            <ion-input formControlName="nome" label="Nome" labelPlacement="stacked" type="text"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-label position="stacked">Cargo</ion-label>
-            <ion-input formControlName="cargo" type="text"></ion-input>
+            <ion-input formControlName="cargo" label="Cargo" labelPlacement="stacked" type="text"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-label position="stacked">Oficializado</ion-label>
-            <ion-input formControlName="oficializado" type="text"></ion-input>
+            <ion-input formControlName="oficializado" label="Oficializado" labelPlacement="stacked" type="text"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-label position="stacked">Batizado</ion-label>
-            <ion-input formControlName="batizado" type="text"></ion-input>
+            <ion-input formControlName="batizado" label="Batizado" labelPlacement="stacked" type="text"></ion-input>
           </ion-item>
 
           <ion-item>
@@ -61,12 +57,7 @@
             </ion-select>
           </ion-item>
 
-          <ion-item>
-            <ion-label>Ativo</ion-label>
-            <ion-toggle formControlName="ativo" slot="end"></ion-toggle>
-          </ion-item>
-
-          <ion-button expand="block" type="submit" [disabled]="form.invalid || modoEdicao" class="botao-salvar">
+          <ion-button expand="block" type="submit" [disabled]="form.invalid" class="botao-salvar">
             Salvar
           </ion-button>
         </form>
