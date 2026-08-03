@@ -99,8 +99,17 @@ export class Database {
   private readonly _versaoDados = signal(0);
   readonly versaoDados = this._versaoDados.asReadonly();
 
+  // Só o navegador precisa do jeep-sqlite: ele emula o SQLite sobre IndexedDB.
+  // No Electron o plugin roda no processo principal com SQLite de verdade
+  // (better-sqlite3), gravando um arquivo .db em disco — chamar initWebStore lá
+  // quebra com "No handler registered for 'CapacitorSQLite-initWebStore'",
+  // porque esse método simplesmente não existe fora da web.
+  private get usaArmazenamentoWeb(): boolean {
+    return this.plataforma === 'web';
+  }
+
   async iniciar(): Promise<void> {
-    if (this.plataforma === 'web' || this.plataforma === 'electron') {
+    if (this.usaArmazenamentoWeb) {
       await customElements.whenDefined('jeep-sqlite');
       await this.sqlite.initWebStore();
     }
@@ -153,6 +162,14 @@ export class Database {
   }
 
   private async abrirConexao(): Promise<SQLiteDBConnection> {
+    // Alinha o registro de conexões do lado nativo com o do JavaScript. No
+    // Android o plugin nativo vive no processo do app, não na WebView: se só a
+    // WebView recarregar, o nativo continua com a conexão aberta enquanto o
+    // JavaScript começa do zero e acha que não existe nenhuma. Sem esta chamada
+    // o createConnection abaixo falha com "Connection srme already exists", o
+    // provideAppInitializer quebra e o app abre em branco.
+    await this.sqlite.checkConnectionsConsistency();
+
     const { result: jaExiste } = await this.sqlite.isConnection(NOME_BANCO, false);
 
     if (jaExiste) {
@@ -219,10 +236,12 @@ export class Database {
     await this.db.execute(sql);
   }
 
-  // Chamado por todo serviço depois de gravar algo. Além de salvar no
-  // IndexedDB (web/electron), avisa as telas de que os dados mudaram.
+  // Chamado por todo serviço depois de gravar algo. Na web ainda é preciso
+  // despejar o banco no IndexedDB; no Electron e no Android a escrita já foi
+  // direto no arquivo. Em todas as plataformas avisa as telas de que os dados
+  // mudaram.
   async persistir(): Promise<void> {
-    if (this.plataforma === 'web' || this.plataforma === 'electron') {
+    if (this.usaArmazenamentoWeb) {
       await this.sqlite.saveToStore(NOME_BANCO);
     }
 

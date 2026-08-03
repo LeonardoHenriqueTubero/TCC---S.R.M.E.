@@ -9,7 +9,10 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "electron:sync": "ng build && cap copy @capacitor-community/electron && cp capacitor.config.ts electron/capacitor.config.ts",
+    "electron:start": "npm run electron:sync && npm --prefix electron run electron:start",
+    "electron:dist": "npm run electron:sync && npm --prefix electron run electron:make:linux"
   },
   "private": true,
   "dependencies": {
@@ -30,7 +33,6 @@
     "@capacitor/keyboard": "8.0.5",
     "@capacitor/share": "^8.0.1",
     "@capacitor/status-bar": "8.0.2",
-    "@capawesome/capacitor-electron": "^0.1.0",
     "@ionic/angular": "^8.0.0",
     "ionicons": "^7.0.0",
     "jeep-sqlite": "^2.8.0",
@@ -51,6 +53,7 @@
     "@angular/cli": "20.3.28",
     "@angular/compiler-cli": "20.3.25",
     "@angular/language-service": "20.3.25",
+    "@capacitor-community/electron": "^5.0.1",
     "@capacitor/cli": "8.4.1",
     "@ionic/angular-toolkit": "^12.0.0",
     "@types/jasmine": "~5.1.0",
