@@ -6,31 +6,11 @@ import {
 } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
-import { existsSync } from 'fs';
-import { writeFile } from 'fs/promises';
-import { basename, join } from 'path';
-
-// Devolve um caminho que ainda não existe na pasta: "nome.pdf", senão
-// "nome (1).pdf", "nome (2).pdf"... Assim gerar o mesmo relatório duas vezes
-// não apaga o anterior sem avisar.
-function caminhoLivre(pasta: string, arquivo: string): string {
-  const ponto = arquivo.lastIndexOf('.');
-  const base = ponto > 0 ? arquivo.slice(0, ponto) : arquivo;
-  const extensao = ponto > 0 ? arquivo.slice(ponto) : '';
-
-  let candidato = join(pasta, arquivo);
-  let contador = 1;
-  while (existsSync(candidato)) {
-    candidato = join(pasta, `${base} (${contador})${extensao}`);
-    contador++;
-  }
-
-  return candidato;
-}
+import { join } from 'path';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -201,25 +181,21 @@ export class ElectronCapacitorApp {
       this.loadMainWindow(this);
     }
 
-    // Grava o PDF de um relatório na pasta que a tela escolheu (ver o
-    // comentário no preload.ts sobre por que não há diálogo do sistema aqui).
-    ipcMain.removeHandler('srme:salvar-pdf');
-    ipcMain.handle(
-      'srme:salvar-pdf',
-      async (_evento, pasta: string, nomeArquivo: string, base64: string) => {
-        const destinos: Record<string, string> = {
-          downloads: app.getPath('downloads'),
-          documents: app.getPath('documents'),
-          desktop: app.getPath('desktop'),
-        };
-
-        // basename() descarta qualquer caminho embutido no nome, então um nome
-        // como "../../.bashrc" não escapa da pasta escolhida.
-        const caminho = caminhoLivre(destinos[pasta] ?? destinos.downloads, basename(nomeArquivo));
-        await writeFile(caminho, Buffer.from(base64, 'base64'));
-        return caminho;
-      }
-    );
+    // Os PDFs dos relatórios chegam aqui como download. Quem abre o "Salvar
+    // como" é o próprio Electron; aqui só o rotulamos, senão o título da janela
+    // vira a URL blob: que o jsPDF gera.
+    //
+    // Este diálogo precisa do Electron 30 ou mais novo. Nas versões antigas ele
+    // não ficava preso à janela do app no Linux: bastava clicar no app para ele
+    // ir para trás sem volta e, sendo modal, travar o programa — em tela cheia
+    // prendia até a barra de tarefas.
+    this.MainWindow.webContents.session.on('will-download', (_event, item) => {
+      item.setSaveDialogOptions({
+        title: 'Salvar relatório',
+        defaultPath: join(app.getPath('downloads'), item.getFilename()),
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+      });
+    });
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {

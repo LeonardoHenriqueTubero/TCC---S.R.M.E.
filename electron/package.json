@@ -36,8 +36,8 @@
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
-    "electron": "^26.2.2",
-    "electron-builder": "~23.6.0",
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3",
     "electron-rebuild": "^3.2.9",
     "typescript": "^5.0.4"
   },

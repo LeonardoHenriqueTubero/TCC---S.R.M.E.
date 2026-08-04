@@ -1,15 +1,9 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import {
-  DestinoEscolhido,
-  PastaDestino,
-  SalvarPdfModal,
-} from '../components/salvar-pdf.modal';
 
 /** Uma tabela do relatório. O título é opcional: use quando o relatório for
  *  dividido em grupos (por exemplo, uma tabela para cada família de instrumento). */
@@ -17,13 +11,6 @@ export interface SecaoRelatorio {
   titulo?: string;
   colunas: string[];
   linhas: (string | number)[][];
-}
-
-/** Ponte exposta pelo preload do Electron. Não existe na web nem no Android,
- *  por isso o serviço sempre confere antes de usar. */
-interface PonteDesktop {
-  /** Devolve o caminho onde o arquivo acabou gravado. */
-  salvarPdf(pasta: PastaDestino, nomeArquivo: string, base64: string): Promise<string>;
 }
 
 /** Tudo que uma tela precisa informar para virar PDF. */
@@ -57,8 +44,6 @@ const COR_CABECALHO: [number, number, number] = [56, 128, 255]; // primary do Io
 })
 export class PdfService {
   private readonly plataforma = Capacitor.getPlatform();
-  private readonly modalController = inject(ModalController);
-  private readonly alertController = inject(AlertController);
 
   async gerar(relatorio: Relatorio): Promise<void> {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -134,38 +119,12 @@ export class PdfService {
     }
   }
 
-  // No navegador o arquivo cai como download. No Android não existe pasta de
-  // downloads acessível direto pela página, então gravamos em cache e abrimos a
-  // folha de compartilhamento para o usuário escolher o destino (salvar,
-  // e-mail, WhatsApp...). No desktop o PDF vai para o processo principal, que
-  // abre o "Salvar como" preso à janela do app — pelo download do próprio
-  // Chromium o diálogo ficava sem dono, abria atrás e travava o programa.
+  // No navegador (e no desktop) o arquivo cai como download, e o Electron abre
+  // o "Salvar como" do sistema. No Android não existe pasta de downloads
+  // acessível direto pela página, então gravamos em cache e abrimos a folha de
+  // compartilhamento para o usuário escolher o destino (salvar, e-mail,
+  // WhatsApp...).
   private async entregar(doc: jsPDF, nomeArquivo: string): Promise<void> {
-    const desktop = (window as unknown as { srmeDesktop?: PonteDesktop }).srmeDesktop;
-
-    if (this.plataforma === 'electron' && desktop) {
-      const destino = await this.perguntarOndeSalvar(nomeArquivo);
-      if (!destino) {
-        return;
-      }
-
-      const caminho = await desktop.salvarPdf(
-        destino.pasta,
-        destino.nomeArquivo,
-        this.paraBase64(doc)
-      );
-
-      // Sem isto o clique em "Salvar" não produz nenhum sinal na tela e parece
-      // que nada aconteceu.
-      const aviso = await this.alertController.create({
-        header: 'Relatório salvo',
-        message: caminho,
-        buttons: ['OK'],
-      });
-      await aviso.present();
-      return;
-    }
-
     if (this.plataforma === 'web' || this.plataforma === 'electron') {
       doc.save(nomeArquivo);
       return;
@@ -178,19 +137,6 @@ export class PdfService {
     });
 
     await Share.share({ title: nomeArquivo, url: uri });
-  }
-
-  // Abre a tela de destino e devolve a escolha, ou null se o usuário desistir.
-  private async perguntarOndeSalvar(nomeArquivo: string): Promise<DestinoEscolhido | null> {
-    const modal = await this.modalController.create({
-      component: SalvarPdfModal,
-      componentProps: { nomeSugerido: nomeArquivo.replace(/\.pdf$/i, '') },
-    });
-
-    await modal.present();
-
-    const { data, role } = await modal.onDidDismiss<DestinoEscolhido>();
-    return role === 'salvar' && data ? data : null;
   }
 
   // Só o base64, sem o prefixo "data:application/pdf;base64,".
