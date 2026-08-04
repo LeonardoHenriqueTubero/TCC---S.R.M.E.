@@ -1,0 +1,45 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancelar()">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-title>Salvar relatório</ion-title>
+    <ion-buttons slot="end">
+      <ion-button [strong]="true" [disabled]="nomeInvalido" (click)="salvar()">Salvar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <!-- A extensão fica de fora do campo para o usuário não apagá-la sem querer. -->
+    <ion-input
+      label="Nome do arquivo"
+      labelPlacement="stacked"
+      [(ngModel)]="nome"
+      (keyup.enter)="salvar()"
+      autofocus="true"
+    >
+      <div slot="end">.pdf</div>
+    </ion-input>
+  </ion-item>
+
+  <ion-list>
+    <ion-list-header>
+      <ion-label>Onde salvar</ion-label>
+    </ion-list-header>
+
+    <ion-radio-group [(ngModel)]="pasta">
+      @for (opcao of pastas; track opcao.valor) {
+        <ion-item>
+          <ion-radio [value]="opcao.valor">{{ opcao.rotulo }}</ion-radio>
+        </ion-item>
+      }
+    </ion-radio-group>
+  </ion-list>
+
+  <ion-note class="ion-padding aviso">
+    Se já existir um arquivo com esse nome, o novo é numerado em vez de
+    substituir o anterior.
+  </ion-note>
+</ion-content>

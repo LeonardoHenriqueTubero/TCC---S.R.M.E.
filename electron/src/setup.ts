@@ -6,15 +6,17 @@ import {
 } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, nativeImage, Tray, session } from 'electron';
 import electronIsDev from 'electron-is-dev';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { writeFile } from 'fs/promises';
+import { basename, join } from 'path';
 
 // Devolve um caminho que ainda não existe na pasta: "nome.pdf", senão
-// "nome (1).pdf", "nome (2).pdf"...
+// "nome (1).pdf", "nome (2).pdf"... Assim gerar o mesmo relatório duas vezes
+// não apaga o anterior sem avisar.
 function caminhoLivre(pasta: string, arquivo: string): string {
   const ponto = arquivo.lastIndexOf('.');
   const base = ponto > 0 ? arquivo.slice(0, ponto) : arquivo;
@@ -199,13 +201,25 @@ export class ElectronCapacitorApp {
       this.loadMainWindow(this);
     }
 
-    // Salva os PDFs dos relatórios na pasta Downloads. Sem isto o Electron não
-    // faz nada de útil com o arquivo gerado pelo jsPDF. Se já existir um
-    // arquivo com o mesmo nome, numera o novo em vez de sobrescrever — é o que
-    // o navegador faz, e evita perder um relatório gerado antes.
-    this.MainWindow.webContents.session.on('will-download', (_event, item) => {
-      item.setSavePath(caminhoLivre(app.getPath('downloads'), item.getFilename()));
-    });
+    // Grava o PDF de um relatório na pasta que a tela escolheu (ver o
+    // comentário no preload.ts sobre por que não há diálogo do sistema aqui).
+    ipcMain.removeHandler('srme:salvar-pdf');
+    ipcMain.handle(
+      'srme:salvar-pdf',
+      async (_evento, pasta: string, nomeArquivo: string, base64: string) => {
+        const destinos: Record<string, string> = {
+          downloads: app.getPath('downloads'),
+          documents: app.getPath('documents'),
+          desktop: app.getPath('desktop'),
+        };
+
+        // basename() descarta qualquer caminho embutido no nome, então um nome
+        // como "../../.bashrc" não escapa da pasta escolhida.
+        const caminho = caminhoLivre(destinos[pasta] ?? destinos.downloads, basename(nomeArquivo));
+        await writeFile(caminho, Buffer.from(base64, 'base64'));
+        return caminho;
+      }
+    );
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {

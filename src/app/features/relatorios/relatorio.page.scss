@@ -4,3 +4,10 @@
   display: block;
   font-size: 0.8rem;
 }
+
+// Mesmo motivo: o aviso de período invertido é uma mensagem do formulário
+// inteiro, não um rótulo ao lado de um campo.
+.erro {
+  display: block;
+  font-size: 0.85rem;
+}

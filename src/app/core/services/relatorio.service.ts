@@ -16,6 +16,43 @@ interface LinhaMusico {
 
 const SEM_VALOR = '—';
 
+/** Recorte de tempo exigido pelos relatórios de participação. As datas chegam
+ *  como 'AAAA-MM-DD' (o formato do <input type="date"> e o mesmo gravado na
+ *  coluna `data`), então comparar como texto já ordena corretamente. */
+export interface FiltroPeriodo {
+  dataInicial: string;
+  dataFinal: string;
+}
+
+export interface FiltroMusico extends FiltroPeriodo {
+  musicoId: number;
+}
+
+export interface FiltroEvento extends FiltroPeriodo {
+  /** null = todas as casas de oração. */
+  casaId: number | null;
+}
+
+export interface FiltroFamilia {
+  /** Pelo menos uma; a tela não deixa gerar com a lista vazia. */
+  familias: string[];
+  /** null = todas as casas de oração. */
+  casaId: number | null;
+}
+
+export interface FiltroCasa {
+  /** null = todas as casas de oração. */
+  casaId: number | null;
+}
+
+/** Uma casa de oração com quantos músicos ativos ela tem — o denominador das
+ *  porcentagens da relação final. */
+interface TotalDaCasa {
+  id: number;
+  nome: string;
+  total: number;
+}
+
 /**
  * Monta o conteúdo dos quatro relatórios.
  *
@@ -30,124 +67,290 @@ const SEM_VALOR = '—';
 export class RelatorioService {
   private readonly dbService = inject(Database);
 
-  // Um músico por linha, com instrumento e casa de oração já pelo nome.
-  async porMusico(): Promise<Relatorio> {
-    const musicos = await this.buscarMusicos();
+  // Os eventos de que um músico participou dentro do período escolhido.
+  async porMusico(filtro: FiltroMusico): Promise<Relatorio> {
+    const conexao = this.dbService.getConexao();
+
+    // Sem filtro por m.ativo: se o músico foi excluído depois, o histórico
+    // dele continua sendo consultável.
+    const musico = await conexao.query('SELECT nome FROM musico WHERE id = ?;', [filtro.musicoId]);
+    const nome = ((musico.values ?? [])[0] as { nome: string } | undefined)?.nome ?? 'Músico';
+
+    // LEFT JOIN no evento e na casa porque o lançamento é histórico: ele deve
+    // aparecer mesmo que o evento ou a casa tenham sumido da tabela depois.
+    const resultado = await conexao.query(
+      `
+      SELECT l.data, e.nome AS evento, c.nome AS casa
+      FROM lancamento l
+      JOIN lancamento_musico lm ON lm.id_lancamento = l.id
+      LEFT JOIN evento e ON e.id = l.evento
+      LEFT JOIN casaOracao c ON c.id = l.local
+      WHERE lm.id_musico = ? AND l.ativo = 1 AND l.data BETWEEN ? AND ?
+      ORDER BY l.data;
+      `,
+      [filtro.musicoId, filtro.dataInicial, filtro.dataFinal]
+    );
+
+    const participacoes = (resultado.values ?? []) as {
+      data: string;
+      evento: string | null;
+      casa: string | null;
+    }[];
 
     return {
       titulo: 'Relatório por Músico',
-      subtitulo: this.contar(musicos.length, 'músico ativo', 'músicos ativos'),
-      nomeArquivo: 'relatorio-musicos',
+      subtitulo: `${nome} · ${this.descreverPeriodo(filtro)} · ${this.contar(participacoes.length, 'evento', 'eventos')}`,
+      nomeArquivo: `relatorio-musico-${this.apelidar(nome)}`,
       secoes: [
         {
-          colunas: ['Nome', 'Instrumento', 'Casa de Oração', 'Cargo', 'Oficializado', 'Batizado'],
-          linhas: musicos.map((m) => [
-            m.nome,
-            m.instrumento ?? SEM_VALOR,
-            m.casa ?? SEM_VALOR,
-            m.cargo,
-            m.oficializado,
-            m.batizado,
+          colunas: ['Data', 'Evento', 'Casa de Oração'],
+          linhas: participacoes.map((p) => [
+            this.formatarData(p.data),
+            p.evento ?? SEM_VALOR,
+            p.casa ?? SEM_VALOR,
           ]),
         },
       ],
     };
   }
 
-  // Uma tabela por casa de oração, com os músicos que pertencem a ela.
-  async porCasaOracao(): Promise<Relatorio> {
-    const musicos = await this.buscarMusicos();
+  // Uma tabela por casa de oração, com os músicos que pertencem a ela, e um
+  // fechamento com o total de músicos de cada casa.
+  async porCasaOracao(filtro: FiltroCasa): Promise<Relatorio> {
+    const musicos = await this.buscarMusicos(filtro.casaId);
 
     const casas = await this.dbService
       .getConexao()
-      .query('SELECT nome, cidade FROM casaOracao WHERE ativo = 1 ORDER BY nome;');
+      .query(
+        `SELECT nome, cidade FROM casaOracao
+         WHERE ativo = 1 ${filtro.casaId !== null ? 'AND id = ?' : ''}
+         ORDER BY nome;`,
+        filtro.casaId !== null ? [filtro.casaId] : []
+      );
 
-    const secoes: SecaoRelatorio[] = ((casas.values ?? []) as { nome: string; cidade: string }[]).map(
-      (casa) => {
-        const daCasa = musicos.filter((m) => m.casa === casa.nome);
+    const listaCasas = (casas.values ?? []) as { nome: string; cidade: string }[];
 
-        return {
-          titulo: `${casa.nome} — ${casa.cidade} (${this.contar(daCasa.length, 'músico', 'músicos')})`,
-          colunas: ['Nome', 'Instrumento', 'Cargo', 'Oficializado'],
-          linhas: daCasa.map((m) => [
-            m.nome,
-            m.instrumento ?? SEM_VALOR,
-            m.cargo,
-            m.oficializado,
-          ]),
-        };
+    const secoes: SecaoRelatorio[] = listaCasas.map((casa) => {
+      const daCasa = musicos.filter((m) => m.casa === casa.nome);
+
+      return {
+        titulo: `${casa.nome} — ${casa.cidade} (${this.contar(daCasa.length, 'músico', 'músicos')})`,
+        colunas: ['Nome', 'Instrumento', 'Cargo', 'Oficializado'],
+        linhas: daCasa.map((m) => [m.nome, m.instrumento ?? SEM_VALOR, m.cargo, m.oficializado]),
+      };
+    });
+
+    // Fechamento pedido: o total por casa reunido numa tabela só, para não ter
+    // de somar os títulos das seções acima na mão.
+    if (listaCasas.length > 0) {
+      const totais: (string | number)[][] = listaCasas.map((casa) => [
+        casa.nome,
+        musicos.filter((m) => m.casa === casa.nome).length,
+      ]);
+
+      // Com uma casa só, a linha de total seria a repetição da linha acima.
+      if (listaCasas.length > 1) {
+        totais.push(['TOTAL', musicos.length]);
       }
-    );
+
+      secoes.push({
+        titulo: 'Total de músicos por casa',
+        colunas: ['Casa de Oração', 'Músicos'],
+        linhas: totais,
+      });
+    }
 
     return {
       titulo: 'Relatório por Casa de Oração',
-      subtitulo: this.contar(secoes.length, 'casa de oração', 'casas de oração'),
+      subtitulo: this.contar(listaCasas.length, 'casa de oração', 'casas de oração'),
       nomeArquivo: 'relatorio-casas-oracao',
       secoes,
     };
   }
 
-  // Uma tabela por família (Cordas, Madeiras, Metais), mostrando quantos
-  // músicos tocam cada instrumento dela.
-  async porFamiliaInstrumento(): Promise<Relatorio> {
-    const resultado = await this.dbService.getConexao().query(`
-      SELECT i.familia, i.nome,
-             (SELECT COUNT(*) FROM musico m WHERE m.instrumento = i.id AND m.ativo = 1) AS musicos
-      FROM instrumento i
-      WHERE i.ativo = 1
-      ORDER BY i.familia, i.nome;
-    `);
+  /** As famílias cadastradas, para a tela montar o filtro. */
+  async listarFamilias(): Promise<string[]> {
+    const resultado = await this.dbService
+      .getConexao()
+      .query('SELECT DISTINCT familia FROM instrumento WHERE ativo = 1 ORDER BY familia;');
 
-    const instrumentos = (resultado.values ?? []) as {
-      familia: string;
+    return ((resultado.values ?? []) as { familia: string }[]).map((f) => f.familia);
+  }
+
+  // Uma tabela por família escolhida com os músicos que a tocam, e no fim a
+  // relação das orquestras: quanto cada família representa do efetivo da casa.
+  async porFamiliaInstrumento(filtro: FiltroFamilia): Promise<Relatorio> {
+    const conexao = this.dbService.getConexao();
+    const porCasa = filtro.casaId !== null;
+
+    // Um '?' para cada família escolhida: o IN não aceita lista ligada de uma vez.
+    const espacos = filtro.familias.map(() => '?').join(', ');
+
+    // JOIN (e não LEFT JOIN) no instrumento: quem não toca nada não pertence a
+    // família nenhuma. Sem filtrar i.ativo, senão o músico sumiria do relatório
+    // só porque o instrumento dele foi excluído do cadastro depois.
+    const resultado = await conexao.query(
+      `
+      SELECT m.nome, i.nome AS instrumento, i.familia, c.nome AS casa
+      FROM musico m
+      JOIN instrumento i ON i.id = m.instrumento
+      LEFT JOIN casaOracao c ON c.id = m.comum_congregacao
+      WHERE m.ativo = 1 AND i.familia IN (${espacos})
+        ${porCasa ? 'AND m.comum_congregacao = ?' : ''}
+      ORDER BY i.familia, m.nome;
+      `,
+      porCasa ? [...filtro.familias, filtro.casaId] : [...filtro.familias]
+    );
+
+    const musicos = (resultado.values ?? []) as {
       nome: string;
-      musicos: number;
+      instrumento: string;
+      familia: string;
+      casa: string | null;
     }[];
 
-    // Agrupa mantendo a ordem que veio do ORDER BY: instrumentos da mesma
-    // família chegam em sequência.
-    const secoes: SecaoRelatorio[] = [];
-    for (const instrumento of instrumentos) {
-      let secao = secoes.find((s) => s.titulo?.startsWith(instrumento.familia));
-      if (!secao) {
-        secao = { titulo: instrumento.familia, colunas: ['Instrumento', 'Músicos'], linhas: [] };
-        secoes.push(secao);
-      }
-      secao.linhas.push([instrumento.nome, instrumento.musicos]);
-    }
+    // Uma seção por família escolhida, na ordem em que o filtro as ofereceu.
+    const secoes: SecaoRelatorio[] = filtro.familias.map((familia) => {
+      const daFamilia = musicos.filter((m) => m.familia === familia);
 
-    // Agora que os totais existem, completa o título de cada família.
-    for (const secao of secoes) {
-      const total = secao.linhas.reduce((soma, linha) => soma + Number(linha[1]), 0);
-      secao.titulo = `${secao.titulo} (${this.contar(total, 'músico', 'músicos')})`;
+      return {
+        titulo: `${familia} (${this.contar(daFamilia.length, 'músico', 'músicos')})`,
+        // Com uma casa escolhida a coluna repetiria o mesmo nome em toda linha.
+        colunas: ['Nome', 'Instrumento', ...(porCasa ? [] : ['Casa de Oração'])],
+        linhas: daFamilia.map((m) => [
+          m.nome,
+          m.instrumento,
+          ...(porCasa ? [] : [m.casa ?? SEM_VALOR]),
+        ]),
+      };
+    });
+
+    const relacao = await this.relacaoDasOrquestras(filtro);
+    if (relacao) {
+      secoes.push(relacao);
     }
 
     return {
       titulo: 'Relatório por Família de Instrumentos',
-      subtitulo: this.contar(secoes.length, 'família', 'famílias'),
+      subtitulo: [
+        filtro.familias.join(', '),
+        porCasa ? await this.nomeDaCasa(filtro.casaId as number) : null,
+        this.contar(musicos.length, 'músico', 'músicos'),
+      ]
+        .filter((parte) => parte !== null)
+        .join(' · '),
       nomeArquivo: 'relatorio-familias-instrumentos',
       secoes,
     };
   }
 
+  // A relação final: uma linha por casa, com a fatia que cada família escolhida
+  // ocupa no efetivo dela. O denominador é o total de músicos ativos da casa
+  // (inclusive quem toca outra família), então as porcentagens só somam 100%
+  // quando todas as famílias estão selecionadas.
+  private async relacaoDasOrquestras(filtro: FiltroFamilia): Promise<SecaoRelatorio | null> {
+    const conexao = this.dbService.getConexao();
+    const porCasa = filtro.casaId !== null;
+
+    const totaisConsulta = await conexao.query(
+      `
+      SELECT c.id, c.nome,
+             (SELECT COUNT(*) FROM musico m WHERE m.comum_congregacao = c.id AND m.ativo = 1) AS total
+      FROM casaOracao c
+      WHERE c.ativo = 1 ${porCasa ? 'AND c.id = ?' : ''}
+      ORDER BY c.nome;
+      `,
+      porCasa ? [filtro.casaId] : []
+    );
+
+    const casas = (totaisConsulta.values ?? []) as TotalDaCasa[];
+    if (casas.length === 0) {
+      return null;
+    }
+
+    const espacos = filtro.familias.map(() => '?').join(', ');
+    const contagemConsulta = await conexao.query(
+      `
+      SELECT m.comum_congregacao AS casaId, i.familia, COUNT(*) AS total
+      FROM musico m
+      JOIN instrumento i ON i.id = m.instrumento
+      WHERE m.ativo = 1 AND i.familia IN (${espacos})
+        ${porCasa ? 'AND m.comum_congregacao = ?' : ''}
+      GROUP BY m.comum_congregacao, i.familia;
+      `,
+      porCasa ? [...filtro.familias, filtro.casaId] : [...filtro.familias]
+    );
+
+    const contagens = (contagemConsulta.values ?? []) as {
+      casaId: number;
+      familia: string;
+      total: number;
+    }[];
+
+    const quantos = (casaId: number, familia: string): number =>
+      contagens.find((c) => c.casaId === casaId && c.familia === familia)?.total ?? 0;
+
+    const linhas: (string | number)[][] = casas.map((casa) => [
+      casa.nome,
+      ...filtro.familias.map((familia) => this.percentual(quantos(casa.id, familia), casa.total)),
+      casa.total,
+    ]);
+
+    // Com uma casa só, a linha de total seria a repetição da linha acima.
+    if (casas.length > 1) {
+      const efetivo = casas.reduce((soma, casa) => soma + casa.total, 0);
+      linhas.push([
+        'TOTAL',
+        ...filtro.familias.map((familia) => {
+          const somaFamilia = casas.reduce((soma, casa) => soma + quantos(casa.id, familia), 0);
+          return this.percentual(somaFamilia, efetivo);
+        }),
+        efetivo,
+      ]);
+    }
+
+    return {
+      titulo: 'Relação final das orquestras',
+      colunas: ['Casa de Oração', ...filtro.familias, 'Músicos da casa'],
+      linhas,
+    };
+  }
+
+  // "40,0%" — vírgula decimal, como se escreve em português.
+  private percentual(parte: number, total: number): string {
+    if (total === 0) {
+      return SEM_VALOR;
+    }
+    return `${((parte / total) * 100).toFixed(1).replace('.', ',')}%`;
+  }
+
+  // Os lançamentos de um período, opcionalmente restritos a uma casa de oração.
   // Um lançamento por linha, com os músicos presentes na última coluna.
-  async porLancamento(): Promise<Relatorio> {
+  async porEvento(filtro: FiltroEvento): Promise<Relatorio> {
     const conexao = this.dbService.getConexao();
 
-    const resultado = await conexao.query(`
+    const porCasa = filtro.casaId !== null;
+
+    const resultado = await conexao.query(
+      `
       SELECT l.id, l.data, e.nome AS evento, c.nome AS casa
       FROM lancamento l
-      JOIN evento e ON e.id = l.evento
-      JOIN casaOracao c ON c.id = l.local
-      WHERE l.ativo = 1
-      ORDER BY l.data DESC;
-    `);
+      LEFT JOIN evento e ON e.id = l.evento
+      LEFT JOIN casaOracao c ON c.id = l.local
+      WHERE l.ativo = 1 AND l.data BETWEEN ? AND ?
+        ${porCasa ? 'AND l.local = ?' : ''}
+      ORDER BY l.data;
+      `,
+      porCasa
+        ? [filtro.dataInicial, filtro.dataFinal, filtro.casaId]
+        : [filtro.dataInicial, filtro.dataFinal]
+    );
 
     const lancamentos = (resultado.values ?? []) as {
       id: number;
       data: string;
-      evento: string;
-      casa: string;
+      evento: string | null;
+      casa: string | null;
     }[];
 
     const linhas: (string | number)[][] = [];
@@ -167,41 +370,68 @@ export class RelatorioService {
 
       const nomes = ((presentes.values ?? []) as { nome: string }[]).map((m) => m.nome);
 
+      // Com uma casa escolhida a coluna repetiria o mesmo nome em toda linha —
+      // ela sai da tabela e vira parte do subtítulo.
       linhas.push([
         this.formatarData(lancamento.data),
-        lancamento.evento,
-        lancamento.casa,
+        lancamento.evento ?? SEM_VALOR,
+        ...(porCasa ? [] : [lancamento.casa ?? SEM_VALOR]),
         nomes.length,
         nomes.length > 0 ? nomes.join(', ') : SEM_VALOR,
       ]);
     }
 
+    const nomeCasa = porCasa ? await this.nomeDaCasa(filtro.casaId as number) : null;
+
     return {
-      titulo: 'Relatório por Lançamento',
-      subtitulo: this.contar(linhas.length, 'lançamento', 'lançamentos'),
-      nomeArquivo: 'relatorio-lancamentos',
+      titulo: 'Relatório por Evento',
+      subtitulo: [
+        this.descreverPeriodo(filtro),
+        nomeCasa,
+        this.contar(linhas.length, 'lançamento', 'lançamentos'),
+      ]
+        .filter((parte) => parte !== null)
+        .join(' · '),
+      nomeArquivo: 'relatorio-eventos',
       secoes: [
         {
-          colunas: ['Data', 'Evento', 'Casa de Oração', 'Qtd.', 'Músicos presentes'],
+          colunas: [
+            'Data',
+            'Evento',
+            ...(porCasa ? [] : ['Casa de Oração']),
+            'Qtd.',
+            'Músicos presentes',
+          ],
           linhas,
         },
       ],
     };
   }
 
-  // Consulta única de músicos reaproveitada por dois relatórios. LEFT JOIN
-  // porque o instrumento ou a casa podem ter sido excluídos depois.
-  private async buscarMusicos(): Promise<LinhaMusico[]> {
-    const resultado = await this.dbService.getConexao().query(`
+  private async nomeDaCasa(id: number): Promise<string> {
+    const resultado = await this.dbService
+      .getConexao()
+      .query('SELECT nome FROM casaOracao WHERE id = ?;', [id]);
+
+    return ((resultado.values ?? [])[0] as { nome: string } | undefined)?.nome ?? 'Casa de oração';
+  }
+
+  // Músicos ativos com os nomes já resolvidos. LEFT JOIN porque o instrumento
+  // ou a casa podem ter sido excluídos depois.
+  private async buscarMusicos(casaId: number | null): Promise<LinhaMusico[]> {
+    const resultado = await this.dbService.getConexao().query(
+      `
       SELECT m.nome, m.cargo, m.oficializado, m.batizado,
              i.nome AS instrumento, i.familia AS familia,
              c.nome AS casa, c.cidade AS cidade
       FROM musico m
       LEFT JOIN instrumento i ON i.id = m.instrumento
       LEFT JOIN casaOracao c ON c.id = m.comum_congregacao
-      WHERE m.ativo = 1
+      WHERE m.ativo = 1 ${casaId !== null ? 'AND m.comum_congregacao = ?' : ''}
       ORDER BY m.nome;
-    `);
+      `,
+      casaId !== null ? [casaId] : []
+    );
 
     return (resultado.values ?? []) as LinhaMusico[];
   }
@@ -217,5 +447,22 @@ export class RelatorioService {
   private formatarData(data: string): string {
     const [ano, mes, dia] = data.split('-');
     return `${dia}/${mes}/${ano}`;
+  }
+
+  // "01/06/2026 a 30/06/2026" — deixa o recorte explícito no PDF, já que o
+  // arquivo circula solto e ninguém lembra que filtro foi usado.
+  private descreverPeriodo(filtro: FiltroPeriodo): string {
+    return `${this.formatarData(filtro.dataInicial)} a ${this.formatarData(filtro.dataFinal)}`;
+  }
+
+  // "João Silva" -> "joao-silva", para o PDF de cada músico sair com um nome
+  // de arquivo distinguível na pasta de downloads.
+  private apelidar(nome: string): string {
+    return nome
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // tira os acentos separados pelo NFD
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 }
