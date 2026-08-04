@@ -172,7 +172,7 @@ export class RelatorioPage {
     {
       id: 'eventos',
       titulo: 'Por Evento',
-      descricao: 'Os lançamentos de um período, de todas as casas ou de uma só.',
+      descricao: 'Os participantes de cada evento do período, com a relação da orquestra.',
       icone: 'calendar-outline',
       campos: ['periodo', 'casa'],
       montar: (filtro) =>

@@ -53,6 +53,15 @@ interface TotalDaCasa {
   total: number;
 }
 
+/** Um músico presente num evento. O instrumento e a família são nulos quando o
+ *  músico não tem instrumento, ou quando ele saiu do cadastro depois. */
+interface ParticipanteDoEvento {
+  lancamentoId: number;
+  nome: string;
+  instrumento: string | null;
+  familia: string | null;
+}
+
 /**
  * Monta o conteúdo dos quatro relatórios.
  *
@@ -324,8 +333,9 @@ export class RelatorioService {
     return `${((parte / total) * 100).toFixed(1).replace('.', ',')}%`;
   }
 
-  // Os lançamentos de um período, opcionalmente restritos a uma casa de oração.
-  // Um lançamento por linha, com os músicos presentes na última coluna.
+  // Um bloco por evento do período — nome, data e local no título, com os
+  // participantes e seus instrumentos — e no fim a relação da orquestra: quanto
+  // cada família representou do efetivo de cada evento.
   async porEvento(filtro: FiltroEvento): Promise<Relatorio> {
     const conexao = this.dbService.getConexao();
 
@@ -353,32 +363,29 @@ export class RelatorioService {
       casa: string | null;
     }[];
 
-    const linhas: (string | number)[][] = [];
-    for (const lancamento of lancamentos) {
-      // Sem filtro por m.ativo: o lançamento é histórico, então quem participou
-      // continua aparecendo mesmo que o músico tenha sido excluído depois.
-      const presentes = await conexao.query(
-        `
-        SELECT m.nome
-        FROM musico m
-        JOIN lancamento_musico lm ON lm.id_musico = m.id
-        WHERE lm.id_lancamento = ?
-        ORDER BY m.nome;
-        `,
-        [lancamento.id]
-      );
+    const participantes = await this.participantesDe(lancamentos.map((l) => l.id));
 
-      const nomes = ((presentes.values ?? []) as { nome: string }[]).map((m) => m.nome);
+    // Um bloco por evento, na ordem cronológica que veio da consulta.
+    const secoes: SecaoRelatorio[] = lancamentos.map((lancamento) => {
+      const doEvento = participantes.filter((p) => p.lancamentoId === lancamento.id);
 
-      // Com uma casa escolhida a coluna repetiria o mesmo nome em toda linha —
-      // ela sai da tabela e vira parte do subtítulo.
-      linhas.push([
-        this.formatarData(lancamento.data),
-        lancamento.evento ?? SEM_VALOR,
-        ...(porCasa ? [] : [lancamento.casa ?? SEM_VALOR]),
-        nomes.length,
-        nomes.length > 0 ? nomes.join(', ') : SEM_VALOR,
-      ]);
+      return {
+        // O título carrega os três dados de cabeçalho do evento.
+        titulo: `${lancamento.evento ?? SEM_VALOR} — ${this.formatarData(lancamento.data)} — ${
+          lancamento.casa ?? SEM_VALOR
+        } (${this.contar(doEvento.length, 'músico', 'músicos')})`,
+        colunas: ['Músico', 'Instrumento', 'Família'],
+        linhas: doEvento.map((p) => [
+          p.nome,
+          p.instrumento ?? SEM_VALOR,
+          p.familia ?? SEM_VALOR,
+        ]),
+      };
+    });
+
+    const relacao = await this.relacaoDosEventos(lancamentos, participantes);
+    if (relacao) {
+      secoes.push(relacao);
     }
 
     const nomeCasa = porCasa ? await this.nomeDaCasa(filtro.casaId as number) : null;
@@ -388,23 +395,92 @@ export class RelatorioService {
       subtitulo: [
         this.descreverPeriodo(filtro),
         nomeCasa,
-        this.contar(linhas.length, 'lançamento', 'lançamentos'),
+        this.contar(lancamentos.length, 'evento', 'eventos'),
       ]
         .filter((parte) => parte !== null)
         .join(' · '),
       nomeArquivo: 'relatorio-eventos',
-      secoes: [
-        {
-          colunas: [
-            'Data',
-            'Evento',
-            ...(porCasa ? [] : ['Casa de Oração']),
-            'Qtd.',
-            'Músicos presentes',
-          ],
-          linhas,
-        },
-      ],
+      secoes,
+    };
+  }
+
+  // Quem participou de cada evento, com instrumento e família. Uma consulta só
+  // para todos os eventos do período, em vez de uma por evento.
+  //
+  // Sem filtro por m.ativo: o lançamento é histórico, então quem participou
+  // continua aparecendo mesmo que o músico tenha sido excluído depois. LEFT JOIN
+  // no instrumento porque o músico pode não ter um, ou ele pode ter sido
+  // excluído do cadastro.
+  private async participantesDe(lancamentoIds: number[]): Promise<ParticipanteDoEvento[]> {
+    if (lancamentoIds.length === 0) {
+      return [];
+    }
+
+    const espacos = lancamentoIds.map(() => '?').join(', ');
+    const resultado = await this.dbService.getConexao().query(
+      `
+      SELECT lm.id_lancamento AS lancamentoId, m.nome,
+             i.nome AS instrumento, i.familia
+      FROM lancamento_musico lm
+      JOIN musico m ON m.id = lm.id_musico
+      LEFT JOIN instrumento i ON i.id = m.instrumento
+      WHERE lm.id_lancamento IN (${espacos})
+      ORDER BY m.nome;
+      `,
+      lancamentoIds
+    );
+
+    return (resultado.values ?? []) as ParticipanteDoEvento[];
+  }
+
+  // A relação final: uma linha por evento, com a fatia de cada família no
+  // efetivo daquele evento. O denominador é o total de participantes, então quem
+  // não tem instrumento cadastrado entra na conta sem somar a nenhuma família.
+  private async relacaoDosEventos(
+    lancamentos: { id: number; data: string; evento: string | null }[],
+    participantes: ParticipanteDoEvento[]
+  ): Promise<SecaoRelatorio | null> {
+    if (lancamentos.length === 0) {
+      return null;
+    }
+
+    const familias = await this.listarFamilias();
+    if (familias.length === 0) {
+      return null;
+    }
+
+    const quantos = (lancamentoId: number, familia: string): number =>
+      participantes.filter((p) => p.lancamentoId === lancamentoId && p.familia === familia).length;
+
+    const totalDe = (lancamentoId: number): number =>
+      participantes.filter((p) => p.lancamentoId === lancamentoId).length;
+
+    const linhas: (string | number)[][] = lancamentos.map((lancamento) => [
+      this.formatarData(lancamento.data),
+      lancamento.evento ?? SEM_VALOR,
+      ...familias.map((familia) =>
+        this.percentual(quantos(lancamento.id, familia), totalDe(lancamento.id))
+      ),
+      totalDe(lancamento.id),
+    ]);
+
+    // Com um evento só, a linha de total seria a repetição da linha acima.
+    if (lancamentos.length > 1) {
+      const efetivo = participantes.length;
+      linhas.push([
+        'TOTAL',
+        '',
+        ...familias.map((familia) =>
+          this.percentual(participantes.filter((p) => p.familia === familia).length, efetivo)
+        ),
+        efetivo,
+      ]);
+    }
+
+    return {
+      titulo: 'Relação final da orquestra',
+      colunas: ['Data', 'Evento', ...familias, 'Músicos'],
+      linhas,
     };
   }
 

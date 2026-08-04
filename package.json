@@ -10,6 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
+    "android:sync": "ng build && cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
     "electron:sync": "ng build && cap copy @capacitor-community/electron && cp capacitor.config.ts electron/capacitor.config.ts",
     "electron:start": "npm run electron:sync && npm --prefix electron run electron:start",
     "electron:dist": "npm run electron:sync && npm --prefix electron run electron:make:linux"
