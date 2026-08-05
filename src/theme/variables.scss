@@ -1,7 +1,7 @@
 // Identidade visual do SRME
 // ---------------------------------------------------------------------------
-// O app tem um tema só, o claro (ver o global.scss, onde o modo escuro do
-// Ionic é deliberadamente não importado).
+// O tema claro é o padrão; o escuro está no fim do arquivo e só entra quando o
+// usuário o escolhe no botão (ver TemaService) — nunca por conta do sistema.
 //
 // A paleta parte de um azul profundo, sóbrio o bastante para um sistema de
 // registro, com um dourado discreto de apoio — a cor dos metais da orquestra —
@@ -101,6 +101,8 @@
   --srme-raio-pequeno: 8px;
   --srme-sombra: 0 1px 2px rgba(28, 37, 48, 0.06), 0 1px 3px rgba(28, 37, 48, 0.04);
   --srme-texto-suave: #5a6673;
+  // Fundo da linha sob o ponteiro do mouse.
+  --srme-realce: #f8fafc;
 
   // Largura da barra lateral no desktop (ver global.scss).
   --srme-largura-menu: 232px;
@@ -129,4 +131,7 @@
   --srme-borda-cor: #2a3441;
   --srme-texto-suave: #98a4b3;
   --srme-sombra: none;
+  // No escuro o realce clareia a linha só o suficiente para se notar; com o
+  // cinza do tema claro aqui, a linha virava um bloco branco e o texto sumia.
+  --srme-realce: #222c38;
 }
