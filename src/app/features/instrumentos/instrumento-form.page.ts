@@ -18,11 +18,13 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { InstrumentoService } from '../../core/services/instrumento.service';
+import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
 
 @Component({
   selector: 'app-instrumento-form',
   templateUrl: './instrumento-form.page.html',
   imports: [
+    SelecaoAdaptavelDirective,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,

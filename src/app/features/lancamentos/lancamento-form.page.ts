@@ -30,12 +30,14 @@ import { MusicoService } from '../../core/services/musico.service';
 import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { Evento } from '../../core/models/evento.model';
 import { Musico } from '../../core/models/musico.model';
+import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
 
 @Component({
   selector: 'app-lancamento-form',
   templateUrl: './lancamento-form.page.html',
   styleUrls: ['./lancamento-form.page.scss'],
   imports: [
+    SelecaoAdaptavelDirective,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,

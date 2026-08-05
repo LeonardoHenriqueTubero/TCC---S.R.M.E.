@@ -22,12 +22,14 @@ import { CasaOracaoService } from '../../../core/services/casa-oracao.service';
 import { InstrumentoService } from '../../../core/services/instrumento.service';
 import { CasaOracao } from '../../../core/models/casa-oracao.model';
 import { Instrumento } from '../../../core/models/instrumento.model';
+import { SelecaoAdaptavelDirective } from '../../../shared/directives/selecao-adaptavel.directive';
 
 @Component({
   selector: 'app-musico-form',
   templateUrl: './musico-form.page.html',
   styleUrls: ['./musico-form.page.scss'],
   imports: [
+    SelecaoAdaptavelDirective,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,

@@ -38,6 +38,7 @@ import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { PdfService, Relatorio } from '../../shared/services/pdf.service';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
+import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
 
 addIcons({
   peopleOutline,
@@ -83,6 +84,7 @@ interface OpcaoRelatorio {
   templateUrl: './relatorio.page.html',
   styleUrls: ['./relatorio.page.scss'],
   imports: [
+    SelecaoAdaptavelDirective,
     BotaoTemaComponent,
     ReactiveFormsModule,
     IonHeader,

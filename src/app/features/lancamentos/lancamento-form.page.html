@@ -23,7 +23,6 @@
               label="Casa de oração"
               labelPlacement="stacked"
               placeholder="Selecione a casa de oração"
-              interface="action-sheet"
             >
               @for (casa of casas; track casa.id) {
                 <ion-select-option [value]="casa.id">{{ casa.nome }} — {{ casa.cidade }}</ion-select-option>
@@ -37,7 +36,6 @@
               label="Evento"
               labelPlacement="stacked"
               placeholder="Selecione o evento"
-              interface="action-sheet"
             >
               @for (evento of eventos; track evento.id) {
                 <ion-select-option [value]="evento.id">{{ evento.nome }}</ion-select-option>

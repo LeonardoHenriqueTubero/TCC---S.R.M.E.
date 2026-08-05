@@ -70,7 +70,6 @@
                 label="Músico"
                 labelPlacement="stacked"
                 placeholder="Selecione o músico"
-                interface="action-sheet"
               >
                 @for (musico of musicos; track musico.id) {
                   <ion-select-option [value]="musico.id">{{ musico.nome }}</ion-select-option>
@@ -107,7 +106,6 @@
                 labelPlacement="stacked"
                 placeholder="Selecione uma ou mais"
                 [multiple]="true"
-                interface="alert"
               >
                 @for (familia of familias; track familia) {
                   <ion-select-option [value]="familia">{{ familia }}</ion-select-option>
@@ -123,7 +121,6 @@
                 [label]="precisaDe('casaObrigatoria') ? 'Casa de oração' : 'Casa de oração (opcional)'"
                 labelPlacement="stacked"
                 placeholder="Selecione a casa de oração"
-                interface="action-sheet"
               >
                 <!-- No filtro opcional o 0 já vem marcado; no obrigatório o
                      select abre vazio e "Todas" precisa ser escolhido. -->

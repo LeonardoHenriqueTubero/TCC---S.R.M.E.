@@ -35,7 +35,6 @@
               label="Casa de oração"
               labelPlacement="stacked"
               placeholder="Selecione a casa de oração"
-              interface="action-sheet"
             >
               @for (casa of casas; track casa.id) {
                 <ion-select-option [value]="casa.id">{{ casa.nome }} — {{ casa.cidade }}</ion-select-option>
@@ -49,7 +48,6 @@
               label="Instrumento"
               labelPlacement="stacked"
               placeholder="Selecione o instrumento"
-              interface="action-sheet"
             >
               @for (instrumento of instrumentos; track instrumento.id) {
                 <ion-select-option [value]="instrumento.id">{{ instrumento.nome }} ({{ instrumento.familia }})</ion-select-option>
