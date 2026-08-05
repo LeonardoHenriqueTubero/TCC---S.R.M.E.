@@ -37,6 +37,7 @@ import { Musico } from '../../core/models/musico.model';
 import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { PdfService, Relatorio } from '../../shared/services/pdf.service';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
+import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 
 addIcons({
   peopleOutline,
@@ -82,6 +83,7 @@ interface OpcaoRelatorio {
   templateUrl: './relatorio.page.html',
   styleUrls: ['./relatorio.page.scss'],
   imports: [
+    BotaoTemaComponent,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,

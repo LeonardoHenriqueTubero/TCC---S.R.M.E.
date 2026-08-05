@@ -23,10 +23,11 @@
 @import "@ionic/angular/css/flex-utils.css";
 
 /*
- * O modo escuro do Ionic não é importado de propósito: o app tem um tema só.
- * Se um dia houver tema escuro, é aqui que entra o palettes/dark.system.css —
- * e aí as cores fixas deste arquivo precisam virar variáveis.
+ * Tema escuro por CLASSE, e não o `dark.system.css`: quem decide é o botão do
+ * app (ver TemaService), não a configuração do sistema. A paleta abaixo só
+ * entra em cena quando a classe .ion-palette-dark está no <html>.
  */
+@import "@ionic/angular/css/palettes/dark.class.css";
 
 /* ---------------------------------------------------------------------------
  * Tipografia
@@ -215,6 +216,44 @@ ion-tab-button {
   --color-selected: var(--ion-color-primary);
 }
 
+/* Cada aba tem sua cor quando está aberta — ajuda a saber onde se está sem
+   precisar ler o rótulo. As inativas continuam todas cinzas, senão a barra
+   viraria um arco-íris. Os tons são fechados de propósito, para conviverem
+   com o azul da identidade; o segundo valor de cada par é a versão clara,
+   usada no tema escuro, onde os tons fechados somem no fundo. */
+ion-tab-button[tab="musicos"] {
+  --cor-aba: #1e5a8e;
+  --cor-aba-clara: #6ba3d6;
+}
+ion-tab-button[tab="casas"] {
+  --cor-aba: #2e7d57;
+  --cor-aba-clara: #63b58c;
+}
+ion-tab-button[tab="eventos"] {
+  --cor-aba: #b07928;
+  --cor-aba-clara: #d9a95c;
+}
+ion-tab-button[tab="instrumentos"] {
+  --cor-aba: #7c4b8a;
+  --cor-aba-clara: #b183bd;
+}
+ion-tab-button[tab="lancamentos"] {
+  --cor-aba: #17697b;
+  --cor-aba-clara: #5fa8b8;
+}
+ion-tab-button[tab="relatorios"] {
+  --cor-aba: #a34434;
+  --cor-aba-clara: #d68b7c;
+}
+
+ion-tab-button.tab-selected {
+  --color-selected: var(--cor-aba, var(--ion-color-primary));
+}
+
+:root.ion-palette-dark ion-tab-button.tab-selected {
+  --color-selected: var(--cor-aba-clara, var(--ion-color-primary));
+}
+
 ion-tab-button ion-icon {
   font-size: 22px;
 }
@@ -390,9 +429,23 @@ ion-tab-button ion-label {
     border-radius: var(--srme-raio-pequeno);
   }
 
-  /* A aba aberta ganha um fundo suave, além da cor. */
+  /* A aba aberta ganha um fundo suave, no tom dela. color-mix é o que permite
+     tingir a partir da mesma variável da cor da aba, sem ter de repetir cada
+     tom em versão transparente. */
   ion-app ion-tab-button.tab-selected::part(native) {
-    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    background: color-mix(
+      in srgb,
+      var(--cor-aba, var(--ion-color-primary)) 12%,
+      transparent
+    );
+  }
+
+  :root.ion-palette-dark ion-app ion-tab-button.tab-selected::part(native) {
+    background: color-mix(
+      in srgb,
+      var(--cor-aba-clara, var(--ion-color-primary)) 18%,
+      transparent
+    );
   }
 }
 

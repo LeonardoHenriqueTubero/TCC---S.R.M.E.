@@ -105,3 +105,28 @@
   // Largura da barra lateral no desktop (ver global.scss).
   --srme-largura-menu: 232px;
 }
+
+// ---------------------------------------------------------------------------
+// Tema escuro
+//
+// A paleta base (fundos, texto, superfícies) vem do próprio Ionic, importada
+// no global.scss. O que precisa vir daqui são as medidas próprias do app: a
+// cor da borda e a do texto suave foram escolhidas para o fundo claro e, sem
+// ajuste, ficariam invisíveis no escuro. A sombra também some — no escuro
+// quem separa uma superfície da outra é a borda, não a sombra.
+//
+// O azul principal clareia um pouco: o tom do tema claro tem contraste de
+// menos sobre fundo escuro.
+// ---------------------------------------------------------------------------
+:root.ion-palette-dark {
+  --ion-color-primary: #6ba3d6;
+  --ion-color-primary-rgb: 107, 163, 214;
+  --ion-color-primary-contrast: #10171f;
+  --ion-color-primary-contrast-rgb: 16, 23, 31;
+  --ion-color-primary-shade: #5e8fbc;
+  --ion-color-primary-tint: #79acda;
+
+  --srme-borda-cor: #2a3441;
+  --srme-texto-suave: #98a4b3;
+  --srme-sombra: none;
+}

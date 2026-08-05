@@ -24,6 +24,7 @@ import { Database } from '../../../core/database/database';
 import { MusicoService } from '../../../core/services/musico.service';
 import { Musico, MusicoListado } from '../../../core/models/musico.model';
 import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
+import { BotaoTemaComponent } from '../../../shared/components/botao-tema.component';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -32,6 +33,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   templateUrl: './musico-lista.page.html',
   styleUrls: ['./musico-lista.page.scss'],
   imports: [
+    BotaoTemaComponent,
     RouterLink,
     IonHeader,
     IonToolbar,

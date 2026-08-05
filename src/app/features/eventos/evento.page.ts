@@ -24,6 +24,7 @@ import { Database } from '../../core/database/database';
 import { EventoService } from '../../core/services/evento.service';
 import { Evento } from '../../core/models/evento.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
+import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -31,6 +32,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   selector: 'app-evento',
   templateUrl: './evento.page.html',
   imports: [
+    BotaoTemaComponent,
     RouterLink,
     IonHeader,
     IonToolbar,

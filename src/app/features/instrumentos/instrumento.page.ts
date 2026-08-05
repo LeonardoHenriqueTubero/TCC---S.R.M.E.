@@ -26,6 +26,7 @@ import { Database } from '../../core/database/database';
 import { InstrumentoService } from '../../core/services/instrumento.service';
 import { Instrumento } from '../../core/models/instrumento.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
+import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -38,6 +39,7 @@ interface GrupoInstrumentos {
   selector: 'app-instrumento',
   templateUrl: './instrumento.page.html',
   imports: [
+    BotaoTemaComponent,
     RouterLink,
     IonHeader,
     IonToolbar,

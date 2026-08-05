@@ -28,6 +28,7 @@ import { Database } from '../../core/database/database';
 import { LancamentoService } from '../../core/services/lancamento.service';
 import { LancamentoComMusicos } from '../../core/models/lancamento-musico.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
+import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -36,6 +37,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   templateUrl: './lancamento.page.html',
   styleUrls: ['./lancamento.page.scss'],
   imports: [
+    BotaoTemaComponent,
     RouterLink,
     IonHeader,
     IonToolbar,

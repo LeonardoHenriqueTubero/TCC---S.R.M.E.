@@ -25,6 +25,7 @@ import { Database } from '../../core/database/database';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
 import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
+import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -32,6 +33,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   selector: 'app-casa-oracao',
   templateUrl: './casa-oracao.page.html',
   imports: [
+    BotaoTemaComponent,
     RouterLink,
     IonHeader,
     IonToolbar,
