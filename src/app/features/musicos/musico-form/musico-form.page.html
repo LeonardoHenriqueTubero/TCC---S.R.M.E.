@@ -21,12 +21,34 @@
             <ion-input formControlName="cargo" label="Cargo" labelPlacement="stacked" type="text"></ion-input>
           </ion-item>
 
+          <!-- Só cabe sim ou não nestes dois, então são escolha, e não texto
+               livre. Os valores guardados continuam sendo as palavras "Sim" e
+               "Não", que é o que o banco já tem e o que os relatórios
+               imprimem. -->
           <ion-item>
-            <ion-input formControlName="oficializado" label="Oficializado" labelPlacement="stacked" type="text"></ion-input>
+            <ion-select
+              formControlName="oficializado"
+              label="Oficializado"
+              labelPlacement="stacked"
+              placeholder="Selecione"
+            >
+              @for (opcao of SIM_OU_NAO; track opcao) {
+                <ion-select-option [value]="opcao">{{ opcao }}</ion-select-option>
+              }
+            </ion-select>
           </ion-item>
 
           <ion-item>
-            <ion-input formControlName="batizado" label="Batizado" labelPlacement="stacked" type="text"></ion-input>
+            <ion-select
+              formControlName="batizado"
+              label="Batizado"
+              labelPlacement="stacked"
+              placeholder="Selecione"
+            >
+              @for (opcao of SIM_OU_NAO; track opcao) {
+                <ion-select-option [value]="opcao">{{ opcao }}</ion-select-option>
+              }
+            </ion-select>
           </ion-item>
 
           <ion-item>

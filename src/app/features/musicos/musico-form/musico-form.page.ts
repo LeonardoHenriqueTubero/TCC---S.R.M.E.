@@ -59,6 +59,9 @@ export class MusicoFormPage implements OnInit {
   casas: CasaOracao[] = [];
   instrumentos: Instrumento[] = [];
 
+  // As duas únicas respostas de "Oficializado" e "Batizado".
+  readonly SIM_OU_NAO = ['Sim', 'Não'] as const;
+
   modoEdicao = false;
   private musicoId?: number;
 
@@ -66,8 +69,8 @@ export class MusicoFormPage implements OnInit {
   // (que marca ativo = 0) é feita pela lista, não por este formulário.
   form = this.formBuilder.nonNullable.group({
     nome: ['', Validators.required],
-    oficializado: [''],
-    batizado: [''],
+    oficializado: ['', Validators.required],
+    batizado: ['', Validators.required],
     cargo: ['', Validators.required],
     // Começam em 0 (nenhuma opção tem id 0), então o Validators.min(1) mantém
     // o formulário inválido até o usuário escolher uma casa/instrumento reais
@@ -95,8 +98,27 @@ export class MusicoFormPage implements OnInit {
     if (musico) {
       // patchValue aceita objeto parcial, então dá para passar o Musico inteiro
       // mesmo ele tendo campos (id, ativo) que o formulário não possui.
-      this.form.patchValue(musico);
+      this.form.patchValue({
+        ...musico,
+        oficializado: this.simOuNao(musico.oficializado),
+        batizado: this.simOuNao(musico.batizado),
+      });
     }
+  }
+
+  /**
+   * Os dois campos eram de texto livre, então um registro antigo pode trazer
+   * "sim", "NÃO", "s"... — e o <ion-select> não mostra um valor que não seja
+   * exatamente uma das suas opções. Aqui a resposta antiga é reconhecida pela
+   * primeira letra; o que não for nem sim nem não abre em branco, para o
+   * usuário escolher.
+   */
+  private simOuNao(valor: string): string {
+    const inicial = valor?.trim().charAt(0).toLowerCase();
+    if (inicial === 's') {
+      return 'Sim';
+    }
+    return inicial === 'n' ? 'Não' : '';
   }
 
   async salvar(): Promise<void> {
