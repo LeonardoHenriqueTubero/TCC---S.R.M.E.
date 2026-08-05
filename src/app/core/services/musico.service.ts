@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
-import { Musico } from '../models/musico.model';
+import { Musico, MusicoListado } from '../models/musico.model';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +14,27 @@ export class MusicoService {
       .getConexao()
       .query('SELECT * FROM musico WHERE ativo = 1 ORDER BY nome;');
     return (resultado.values ?? []) as Musico[];
+  }
+
+  // Mesma lista, com o instrumento e a casa de oração já pelo nome — a tela de
+  // listagem mostra essas colunas e não teria como resolver os ids sozinha.
+  //
+  // É um método separado de propósito: as outras telas que chamam listarTodos()
+  // (os músicos do lançamento e o filtro dos relatórios) usam só id e nome, e
+  // não têm por que pagar dois JOINs nem mudar de tipo.
+  //
+  // LEFT JOIN nos dois: o músico pode não ter instrumento ou casa, e o cadastro
+  // de um deles pode ter sido excluído depois de vinculado.
+  async listarComNomes(): Promise<MusicoListado[]> {
+    const resultado = await this.dbService.getConexao().query(`
+      SELECT m.*, i.nome AS instrumentoNome, c.nome AS casaNome
+      FROM musico m
+      LEFT JOIN instrumento i ON i.id = m.instrumento
+      LEFT JOIN casaOracao c ON c.id = m.comum_congregacao
+      WHERE m.ativo = 1
+      ORDER BY m.nome;
+    `);
+    return (resultado.values ?? []) as MusicoListado[];
   }
 
   async buscarPorId(id: number): Promise<Musico | undefined> {

@@ -3,3 +3,50 @@
   justify-content: center;
   padding: 2rem;
 }
+
+// As colunas de instrumento e casa de oração só existem no computador: no
+// celular não há largura para elas, e a linha continua sendo nome e cargo.
+.cabecalho-tabela,
+.colunas-tabela {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .cabecalho-tabela {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 16px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--srme-texto-suave);
+  }
+
+  .colunas-tabela {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.875rem;
+    color: var(--srme-texto-suave);
+  }
+
+  // As larguras são as mesmas nos dois blocos, senão o cabeçalho não fica
+  // sobre a coluna que ele nomeia.
+  .cabecalho-tabela .coluna-principal {
+    flex: 1;
+  }
+
+  .cabecalho-tabela .coluna,
+  .colunas-tabela .coluna {
+    width: 180px;
+    flex: 0 0 180px;
+  }
+
+  // Reserva o espaço dos dois botões de ação da linha, para o cabeçalho
+  // terminar onde as colunas terminam.
+  .cabecalho-tabela .coluna-acoes {
+    flex: 0 0 96px;
+  }
+}

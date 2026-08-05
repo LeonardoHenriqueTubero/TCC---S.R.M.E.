@@ -23,6 +23,16 @@
             <ion-spinner></ion-spinner>
           </div>
         } @else {
+          <!-- Cabeçalho das colunas: existe só no computador, onde a lista tem
+               largura para virar tabela. No celular ele fica escondido e a
+               linha continua sendo nome e cargo, um sobre o outro. -->
+          <div class="cabecalho-tabela">
+            <span class="coluna-principal">Nome</span>
+            <span class="coluna">Instrumento</span>
+            <span class="coluna">Casa de oração</span>
+            <span class="coluna-acoes"></span>
+          </div>
+
           <ion-list>
             @for (musico of musicos; track musico.id) {
               <!-- Os botões ficam soltos no item (o item em si não é clicável):
@@ -32,6 +42,10 @@
                   <h2>{{ musico.nome }}</h2>
                   <p>{{ musico.cargo }}</p>
                 </ion-label>
+                <div slot="end" class="colunas-tabela">
+                  <span class="coluna">{{ musico.instrumentoNome ?? '—' }}</span>
+                  <span class="coluna">{{ musico.casaNome ?? '—' }}</span>
+                </div>
                 <ion-button slot="end" fill="clear" [routerLink]="['/musicos', musico.id, 'editar']">
                   <ion-icon slot="icon-only" name="create-outline"></ion-icon>
                 </ion-button>

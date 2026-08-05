@@ -22,7 +22,7 @@ import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
 import { Database } from '../../../core/database/database';
 import { MusicoService } from '../../../core/services/musico.service';
-import { Musico } from '../../../core/models/musico.model';
+import { Musico, MusicoListado } from '../../../core/models/musico.model';
 import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
 
 addIcons({ addOutline, createOutline, trashOutline });
@@ -56,7 +56,7 @@ export class MusicoListaPage {
   private readonly confirmacao = inject(ConfirmacaoService);
   private readonly database = inject(Database);
 
-  musicos: Musico[] = [];
+  musicos: MusicoListado[] = [];
   carregando = true;
 
   constructor() {
@@ -72,7 +72,7 @@ export class MusicoListaPage {
 
   async carregarMusicos(): Promise<void> {
     this.carregando = true;
-    this.musicos = await this.musicoService.listarTodos();
+    this.musicos = await this.musicoService.listarComNomes();
     this.carregando = false;
   }
 
