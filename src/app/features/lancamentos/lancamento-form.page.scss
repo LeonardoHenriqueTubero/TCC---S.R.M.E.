@@ -1,0 +1,22 @@
+// A relação de músicos rola dentro da própria caixa, em vez de esticar o
+// formulário: com o cadastro cheio, a página ficava com metros de altura e o
+// botão Salvar terminava longe demais dos outros campos.
+//
+// A altura é dada em múltiplos da linha (cada ion-item tem 52px de mínimo),
+// então a caixa sempre termina cortando uma linha ao meio — é assim que se vê,
+// sem precisar de aviso, que a lista continua abaixo.
+.rol-musicos {
+  max-height: 338px; // 6 linhas e meia
+  overflow-y: auto;
+
+  // Sem isto, ao chegar ao fim da relação o gesto de rolagem "vaza" e passa a
+  // rolar o formulário atrás, o que confunde no celular.
+  overscroll-behavior: contain;
+}
+
+// Na tela grande sobra altura, então a caixa mostra mais nomes de uma vez.
+@media (min-width: 992px) {
+  .rol-musicos {
+    max-height: 442px; // 8 linhas e meia
+  }
+}

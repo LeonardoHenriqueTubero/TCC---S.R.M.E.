@@ -34,6 +34,7 @@ import { Musico } from '../../core/models/musico.model';
 @Component({
   selector: 'app-lancamento-form',
   templateUrl: './lancamento-form.page.html',
+  styleUrls: ['./lancamento-form.page.scss'],
   imports: [
     ReactiveFormsModule,
     IonHeader,

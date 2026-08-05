@@ -59,20 +59,25 @@
               (ionInput)="termoBusca = $any($event.target).value"
             ></ion-searchbar>
 
-            @for (musico of musicosFiltrados(); track musico.id) {
-              <ion-item>
-                <ion-checkbox
-                  [checked]="estaSelecionado(musico.id)"
-                  (ionChange)="alternarMusico(musico.id)"
-                >
-                  {{ musico.nome }}
-                </ion-checkbox>
-              </ion-item>
-            } @empty {
-              <ion-item>
-                <ion-label>Nenhum músico encontrado.</ion-label>
-              </ion-item>
-            }
+            <!-- Só os nomes rolam: o cabeçalho e a busca ficam parados acima.
+                 Sem esta caixa, cada músico cadastrado esticava o formulário e
+                 o botão Salvar ia parar cada vez mais longe. -->
+            <div class="rol-musicos">
+              @for (musico of musicosFiltrados(); track musico.id) {
+                <ion-item>
+                  <ion-checkbox
+                    [checked]="estaSelecionado(musico.id)"
+                    (ionChange)="alternarMusico(musico.id)"
+                  >
+                    {{ musico.nome }}
+                  </ion-checkbox>
+                </ion-item>
+              } @empty {
+                <ion-item>
+                  <ion-label>Nenhum músico encontrado.</ion-label>
+                </ion-item>
+              }
+            </div>
           </ion-list>
 
           <ion-button
