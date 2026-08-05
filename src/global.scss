@@ -152,6 +152,12 @@ ion-searchbar {
   padding-inline: 12px;
 }
 
+/* A ação principal de cada tela existe duas vezes no template: como botão da
+   barra de título e como botão flutuante. Cada tamanho de tela mostra uma. */
+.acao-da-tela {
+  display: none;
+}
+
 /* ---------------------------------------------------------------------------
  * Janelas sobrepostas
  * No celular o modal ocupa a tela toda, como se espera de um aplicativo. Na
@@ -214,6 +220,80 @@ ion-tab-button ion-label {
 }
 
 @media (min-width: 992px) {
+  /* -------------------------------------------------------------------------
+   * No computador o app deixa de imitar o celular.
+   *
+   * O que muda: a ação principal sai do botão flutuante e vai para a barra de
+   * título; o conteúdo ocupa a largura da janela em vez de uma coluna estreita
+   * no meio; as linhas ficam mais baixas e reagem ao ponteiro, com o aspecto
+   * de uma tabela em vez de uma lista de toque.
+   * ---------------------------------------------------------------------- */
+  .acao-da-tela {
+    display: flex;
+  }
+
+  .acao-da-tela ion-button {
+    --padding-start: 14px;
+    --padding-end: 16px;
+    height: 36px;
+    font-size: 0.875rem;
+  }
+
+  /* O botão flutuante é a versão de celular da mesma ação. */
+  ion-fab {
+    display: none;
+  }
+
+  /* As telas nascem com a coluna estreita e centralizada que faz sentido no
+     celular (size-lg="8" offset-lg="2"). Na janela larga isso deixaria um
+     terço da tela vazio, então o recorte é desfeito aqui, num lugar só, em vez
+     de espalhar breakpoints por cada template. */
+  ion-content ion-grid {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 28px;
+    padding-top: 20px;
+  }
+
+  /* O !important é necessário: o ion-col calcula a largura e o recuo em
+     JavaScript e os escreve no atributo style do elemento, que ganha de
+     qualquer folha de estilo. */
+  ion-content ion-grid > ion-row > ion-col {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline-start: 0 !important;
+  }
+
+  /* Listagem pode ocupar a janela toda, formulário não: campo de texto com um
+     metro de largura é desconfortável de ler e de preencher. */
+  ion-content form {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  /* Densidade de tela grande: as linhas encolhem porque as margens do rótulo
+     encolhem — só baixar o --min-height não adiantaria, já que quem determina
+     a altura é o conteúdo (nome em cima, cargo embaixo). */
+  ion-content ion-item {
+    --min-height: 44px;
+  }
+
+  ion-content ion-list ion-item ion-label h2 {
+    margin-top: 0;
+    margin-bottom: 1px;
+  }
+
+  ion-content ion-list ion-item ion-label p {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* Realce sob o ponteiro — algo que só existe onde há mouse. */
+  ion-content ion-list ion-item:hover {
+    --background: #f8fafc;
+  }
+
   /* A classe vem do template (tabs.page.html) e não é enfeite: o ion-tabs do
      @ionic/angular aplica flex-direction: column pelo seletor de host
      [_nghost-…], que por ser atributo ganha de um seletor de elemento puro. */

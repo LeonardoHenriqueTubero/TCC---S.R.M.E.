@@ -19,6 +19,7 @@ import {
   IonFab,
   IonFabButton,
   IonIcon,
+  IonButtons,
   IonButton,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -54,6 +55,7 @@ addIcons({ addOutline, createOutline, trashOutline });
     IonFab,
     IonFabButton,
     IonIcon,
+    IonButtons,
     IonButton,
   ],
 })

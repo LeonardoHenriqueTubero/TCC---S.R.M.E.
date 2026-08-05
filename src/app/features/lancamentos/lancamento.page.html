@@ -1,6 +1,15 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Lançamentos</ion-title>
+    <!-- No computador a ação principal fica na barra de título, como em
+         qualquer programa de desktop; no celular ela continua sendo o botão
+         flutuante, que o CSS troca conforme a largura da tela. -->
+    <ion-buttons slot="end" class="acao-da-tela">
+      <ion-button fill="solid" color="primary" routerLink="/lancamentos/novo">
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Novo lançamento
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
