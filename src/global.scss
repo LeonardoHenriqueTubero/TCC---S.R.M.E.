@@ -69,6 +69,24 @@ ion-title {
 }
 
 /* ---------------------------------------------------------------------------
+ * Área segura do sistema
+ *
+ * O index.html pede viewport-fit=cover e, do Android 15 em diante, o sistema
+ * obriga o app a desenhar de ponta a ponta: a barra de navegação fica POR CIMA
+ * da página, não ao lado dela. Sem reservar esse espaço, o que estiver no fim
+ * do conteúdo termina atrás dos botões do sistema — foi o que acontecia com o
+ * "Salvar" dos formulários (medido no aparelho: barra de 48px e apenas 14px de
+ * folga sob o botão).
+ *
+ * A reserva vale para todo ion-content. Nas telas com abas o espaço é
+ * redundante, porque a barra de abas já fica sobre a área do sistema, mas ali
+ * ele some no fim da rolagem — e assim nenhuma tela nova nasce com o problema.
+ * ------------------------------------------------------------------------ */
+ion-content {
+  --padding-bottom: var(--ion-safe-area-bottom, 0px);
+}
+
+/* ---------------------------------------------------------------------------
  * Listas e itens
  * Cada ion-list vira um bloco branco arredondado sobre o fundo acinzentado.
  * É o que dá o ritmo visual do app sem precisar reescrever as telas.
