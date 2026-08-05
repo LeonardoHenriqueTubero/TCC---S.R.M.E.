@@ -23,7 +23,9 @@ export interface Relatorio {
 }
 
 const MARGEM = 14;
-const COR_CABECALHO: [number, number, number] = [56, 128, 255]; // primary do Ionic
+// O mesmo azul do --ion-color-primary (theme/variables.scss), para o relatório
+// impresso ter a cara do app.
+const COR_CABECALHO: [number, number, number] = [30, 90, 142];
 
 /**
  * Converte os dados de uma tela em PDF.

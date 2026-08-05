@@ -1,4 +1,8 @@
-<ion-tabs>
+<!-- A classe existe para o global.scss conseguir virar esta barra de lado no
+     computador: o ion-tabs do @ionic/angular é um componente Angular e traz
+     um estilo de host (flex-direction: column) que um seletor de elemento
+     sozinho não supera. -->
+<ion-tabs class="navegacao-principal">
   <ion-tab-bar slot="bottom">
     <ion-tab-button tab="musicos">
       <ion-icon name="people-outline"></ion-icon>

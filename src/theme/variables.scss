@@ -1,2 +1,107 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// Identidade visual do SRME
+// ---------------------------------------------------------------------------
+// O app tem um tema só, o claro (ver o global.scss, onde o modo escuro do
+// Ionic é deliberadamente não importado).
+//
+// A paleta parte de um azul profundo, sóbrio o bastante para um sistema de
+// registro, com um dourado discreto de apoio — a cor dos metais da orquestra —
+// usado só em destaques. Os fundos são um branco levemente azulado em vez de
+// branco puro, para as superfícies brancas (itens, cards) se destacarem sem
+// precisar de sombra forte.
+//
+// Cada cor do Ionic precisa do trio base/shade/tint e da versão -rgb, que os
+// componentes usam para gerar transparências.
+
+:root {
+  // ----- Azul principal: barras, botões, estados ativos -------------------
+  --ion-color-primary: #1e5a8e;
+  --ion-color-primary-rgb: 30, 90, 142;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #1a4f7d;
+  --ion-color-primary-tint: #346a99;
+
+  // ----- Dourado de apoio: só em destaques pontuais -----------------------
+  --ion-color-secondary: #c88a2e;
+  --ion-color-secondary-rgb: 200, 138, 46;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #b07928;
+  --ion-color-secondary-tint: #ce9643;
+
+  --ion-color-tertiary: #4a7c59;
+  --ion-color-tertiary-rgb: 74, 124, 89;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #416d4e;
+  --ion-color-tertiary-tint: #5c896a;
+
+  // ----- Cores de estado --------------------------------------------------
+  --ion-color-success: #2e7d57;
+  --ion-color-success-rgb: 46, 125, 87;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #286e4c;
+  --ion-color-success-tint: #438a68;
+
+  --ion-color-warning: #b7791f;
+  --ion-color-warning-rgb: 183, 121, 31;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
+  --ion-color-warning-shade: #a16a1b;
+  --ion-color-warning-tint: #be8635;
+
+  --ion-color-danger: #b3261e;
+  --ion-color-danger-rgb: 179, 38, 30;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #9d211a;
+  --ion-color-danger-tint: #bb3c35;
+
+  // ----- Neutros ----------------------------------------------------------
+  --ion-color-dark: #1c2530;
+  --ion-color-dark-rgb: 28, 37, 48;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #19212a;
+  --ion-color-dark-tint: #333b45;
+
+  --ion-color-medium: #6b7684;
+  --ion-color-medium-rgb: 107, 118, 132;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #5e6874;
+  --ion-color-medium-tint: #7a8490;
+
+  --ion-color-light: #f1f4f8;
+  --ion-color-light-rgb: 241, 244, 248;
+  --ion-color-light-contrast: #1c2530;
+  --ion-color-light-contrast-rgb: 28, 37, 48;
+  --ion-color-light-shade: #d4d7da;
+  --ion-color-light-tint: #f2f5f9;
+
+  // ----- Superfícies e texto ---------------------------------------------
+  --ion-background-color: #f5f7fa;
+  --ion-background-color-rgb: 245, 247, 250;
+
+  --ion-text-color: #1c2530;
+  --ion-text-color-rgb: 28, 37, 48;
+
+  --ion-item-background: #ffffff;
+  --ion-card-background: #ffffff;
+  --ion-toolbar-background: #ffffff;
+  --ion-tab-bar-background: #ffffff;
+  --ion-border-color: #e2e8f0;
+
+  // ----- Medidas próprias do app -----------------------------------------
+  // Ficam aqui para o arredondamento, a borda e a sombra serem os mesmos em
+  // toda tela; mudar um valor daqui muda o app inteiro.
+  --srme-borda-cor: #e2e8f0;
+  --srme-raio: 12px;
+  --srme-raio-pequeno: 8px;
+  --srme-sombra: 0 1px 2px rgba(28, 37, 48, 0.06), 0 1px 3px rgba(28, 37, 48, 0.04);
+  --srme-texto-suave: #5a6673;
+
+  // Largura da barra lateral no desktop (ver global.scss).
+  --srme-largura-menu: 232px;
+}

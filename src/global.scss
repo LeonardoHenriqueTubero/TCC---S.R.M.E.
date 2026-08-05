@@ -1,12 +1,9 @@
 /*
- * App Global CSS
+ * Estilos globais do SRME
  * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
+ * A paleta e as medidas ficam em theme/variables.scss; aqui está como elas se
+ * aplicam aos componentes. Regras que valem para o app inteiro vivem neste
+ * arquivo — o que for de uma tela só fica no .scss dela.
  */
 
 /* Core CSS required for Ionic components to work properly */
@@ -25,16 +22,281 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
+/*
+ * O modo escuro do Ionic não é importado de propósito: o app tem um tema só.
+ * Se um dia houver tema escuro, é aqui que entra o palettes/dark.system.css —
+ * e aí as cores fixas deste arquivo precisam virar variáveis.
  */
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+/* ---------------------------------------------------------------------------
+ * Tipografia
+ * A fonte é a do próprio sistema, e não uma da web: o app roda offline e, no
+ * Electron, a política de segurança bloqueia carregamento externo — uma fonte
+ * remota simplesmente não chegaria.
+ * ------------------------------------------------------------------------ */
+:root {
+  --ion-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.01em;
+}
+
+/* ---------------------------------------------------------------------------
+ * Barra de título
+ * Clara, com uma borda fina no lugar da sombra — a cor forte fica reservada
+ * para o que é clicável.
+ * ------------------------------------------------------------------------ */
+ion-header::after {
+  display: none;
+}
+
+ion-toolbar {
+  --border-width: 0 0 1px 0;
+  --border-color: var(--srme-borda-cor);
+  --min-height: 56px;
+  --padding-start: 8px;
+  --padding-end: 8px;
+}
+
+ion-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+ * Listas e itens
+ * Cada ion-list vira um bloco branco arredondado sobre o fundo acinzentado.
+ * É o que dá o ritmo visual do app sem precisar reescrever as telas.
+ * ------------------------------------------------------------------------ */
+ion-content ion-list {
+  border: 1px solid var(--srme-borda-cor);
+  border-radius: var(--srme-raio);
+  box-shadow: var(--srme-sombra);
+  overflow: hidden;
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+ion-item {
+  --border-color: var(--srme-borda-cor);
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --min-height: 52px;
+}
+
+/* Itens fora de uma lista (formulários, sobretudo) viram cada um seu próprio
+   cartão, senão ficariam faixas brancas soltas sobre o fundo cinza. */
+ion-content ion-item {
+  border: 1px solid var(--srme-borda-cor);
+  border-radius: var(--srme-raio-pequeno);
+  box-shadow: var(--srme-sombra);
+  margin-bottom: 10px;
+  --border-width: 0;
+}
+
+/* Dentro de uma lista quem desenha a moldura é a própria lista. */
+ion-content ion-list ion-item {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+ion-list-header ion-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--srme-texto-suave);
+}
+
+ion-item h2 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+ion-item p {
+  font-size: 0.8125rem;
+  color: var(--srme-texto-suave);
+}
+
+ion-note {
+  color: var(--srme-texto-suave);
+}
+
+/* ---------------------------------------------------------------------------
+ * Botões e busca
+ * ------------------------------------------------------------------------ */
+ion-button {
+  --border-radius: var(--srme-raio-pequeno);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+ion-fab-button {
+  --box-shadow: 0 4px 12px rgba(30, 90, 142, 0.3);
+}
+
+ion-searchbar {
+  --box-shadow: none;
+  --background: var(--ion-color-light);
+  --border-radius: var(--srme-raio-pequeno);
+  --placeholder-color: var(--srme-texto-suave);
+  --icon-color: var(--srme-texto-suave);
+  padding-inline: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Janelas sobrepostas
+ * No celular o modal ocupa a tela toda, como se espera de um aplicativo. Na
+ * tela grande ele vira uma caixa do tamanho do conteúdo, centralizada — sem
+ * isto o Ionic o estica de cima a baixo e sobra um vazio enorme sob dois
+ * campos de formulário.
+ * ------------------------------------------------------------------------ */
+@media (min-width: 768px) {
+  ion-modal {
+    --width: 480px;
+    --height: 440px;
+    --border-radius: var(--srme-raio);
+    --box-shadow: 0 10px 40px rgba(28, 37, 48, 0.2);
+  }
+}
+/* A altura é fixa de propósito. Com `--height: auto` o ion-modal encolhe até
+   sobrar só o cabeçalho: para a altura acompanhar o conteúdo seria preciso um
+   contêiner extra dentro do template de cada modal, e não vale a complicação
+   por dois ou três campos. Se o conteúdo passar disso, ele rola. */
+
+/* ---------------------------------------------------------------------------
+ * Navegação: abas embaixo no celular, barra lateral no computador
+ *
+ * É a mesma ion-tab-bar nos dois casos — o que muda é a direção. No desktop o
+ * ion-tabs dispõe os filhos em linha invertida (a barra vem depois do conteúdo
+ * no DOM, então o reverse a joga para a esquerda) e a barra vira uma coluna.
+ * Assim o app se parece com um programa de computador na tela grande e com um
+ * aplicativo de celular na pequena, sem duplicar a navegação.
+ * ------------------------------------------------------------------------ */
+ion-tab-bar {
+  --border: 1px solid var(--srme-borda-cor);
+  height: 58px;
+}
+
+ion-tab-button {
+  --color: var(--srme-texto-suave);
+  --color-selected: var(--ion-color-primary);
+}
+
+ion-tab-button ion-icon {
+  font-size: 22px;
+}
+
+ion-tab-button ion-label {
+  font-weight: 500;
+}
+
+/* Com seis abas os rótulos não cabem em celulares estreitos: no padrão do
+   Ionic (fonte 12px) a barra pede 420px e estoura numa tela de 360px,
+   cortando "Músicos" e "Relatórios". */
+@media (max-width: 480px) {
+  ion-tab-button {
+    --padding-start: 2px;
+    --padding-end: 2px;
+  }
+
+  ion-tab-button ion-label {
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 992px) {
+  /* A classe vem do template (tabs.page.html) e não é enfeite: o ion-tabs do
+     @ionic/angular aplica flex-direction: column pelo seletor de host
+     [_nghost-…], que por ser atributo ganha de um seletor de elemento puro. */
+  ion-tabs.navegacao-principal {
+    flex-direction: row-reverse;
+  }
+
+  ion-app ion-tab-bar {
+    --border: 0;
+
+    position: relative;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: var(--srme-largura-menu);
+    min-width: var(--srme-largura-menu);
+    height: auto; /* na horizontal a barra tinha altura fixa; aqui ela estica */
+    padding: 68px 12px 12px;
+    border-right: 1px solid var(--srme-borda-cor);
+    contain: none;
+  }
+
+  /* Assinatura do app no topo da barra lateral. Fica em ::before para não
+     precisar de um elemento extra dentro da ion-tab-bar, que só aceita
+     ion-tab-button como filho. */
+  ion-app ion-tab-bar::before {
+    content: "SRME";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--ion-color-primary);
+    border-bottom: 1px solid var(--srme-borda-cor);
+  }
+
+  /* Sem isto os botões repartem a altura da barra entre si (o padrão é
+     flex: 1) e viram seis faixas enormes na lateral. */
+  ion-app ion-tab-button {
+    --padding-start: 14px;
+    --padding-end: 14px;
+
+    flex: 0 0 auto;
+    max-width: none;
+    width: 100%;
+    height: 44px;
+    margin-bottom: 2px;
+  }
+
+  ion-app ion-tab-button ion-label {
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  /* O espaçamento entre ícone e rótulo precisa vir da margem do próprio ícone:
+     os dois são distribuídos por um contêiner dentro do shadow DOM do botão,
+     que o `gap` de fora não alcança. */
+  ion-app ion-tab-button ion-icon {
+    font-size: 19px;
+    margin: 0 11px 0 0;
+  }
+
+  /* O interior do botão é uma coluna por padrão (ícone sobre o rótulo); na
+     lateral os dois ficam lado a lado. */
+  ion-app ion-tab-button::part(native) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    border-radius: var(--srme-raio-pequeno);
+  }
+
+  /* A aba aberta ganha um fundo suave, além da cor. */
+  ion-app ion-tab-button.tab-selected::part(native) {
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+  }
+}
 
 /**
  * Botão de confirmação destrutiva do ConfirmacaoService.
