@@ -91,7 +91,12 @@
   --ion-card-background: #ffffff;
   --ion-toolbar-background: #ffffff;
   --ion-tab-bar-background: #ffffff;
-  --ion-border-color: #e2e8f0;
+  // Apontar para a nossa variável, e não repetir o valor: a paleta escura do
+  // Ionic troca os fundos acima por conta própria, mas não mexe em
+  // --ion-border-color. Com a cor escrita à mão aqui, ela continuava clara no
+  // tema escuro e todo traço que o Ionic desenha sozinho — a divisória entre
+  // as famílias de instrumentos, por exemplo — virava uma linha quase branca.
+  --ion-border-color: var(--srme-borda-cor);
 
   // ----- Medidas próprias do app -----------------------------------------
   // Ficam aqui para o arredondamento, a borda e a sombra serem os mesmos em
@@ -106,6 +111,16 @@
 
   // Largura da barra lateral no desktop (ver global.scss).
   --srme-largura-menu: 232px;
+}
+
+// No computador, sem sombra: espalhada por um bloco da largura da janela ela
+// lê como cartão de celular flutuando sobre o fundo, e não como a tabela que
+// aquela tela é. Quem separa uma superfície da outra ali é a borda — a mesma
+// escolha que o tema escuro faz logo abaixo.
+@media (min-width: 992px) {
+  :root {
+    --srme-sombra: none;
+  }
 }
 
 // ---------------------------------------------------------------------------

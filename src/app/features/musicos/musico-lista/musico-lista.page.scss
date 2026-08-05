@@ -12,11 +12,18 @@
 }
 
 @media (min-width: 992px) {
+  // Espaço que os dois botões de ação ocupam no fim da linha: cada um mede
+  // 32px e é precedido de 12px de folga, mais os 16px de --inner-padding-end
+  // do ion-item. O cabeçalho recua o mesmo tanto à direita; sem isso ele
+  // termina depois das colunas e cada legenda fica à esquerda do dado que
+  // nomeia (eram 17px de desencontro).
+  $recuo-acoes: 12px + 32px + 12px + 32px + 16px;
+
   .cabecalho-tabela {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 0 16px 8px;
+    padding: 0 $recuo-acoes 8px 16px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -44,9 +51,15 @@
     flex: 0 0 180px;
   }
 
-  // Reserva o espaço dos dois botões de ação da linha, para o cabeçalho
-  // terminar onde as colunas terminam.
-  .cabecalho-tabela .coluna-acoes {
-    flex: 0 0 96px;
+  // Medida fixa nos botões da linha: é o que permite calcular o recuo do
+  // cabeçalho acima em vez de acertá-lo no olho. Mudou a quantidade ou o
+  // tamanho dos botões, refaça a conta de $recuo-acoes.
+  ion-item > ion-button {
+    --padding-start: 0;
+    --padding-end: 0;
+
+    width: 32px;
+    height: 32px;
+    margin: 0 0 0 12px;
   }
 }

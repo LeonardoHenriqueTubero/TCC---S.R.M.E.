@@ -52,8 +52,14 @@ h4 {
  * Clara, com uma borda fina no lugar da sombra — a cor forte fica reservada
  * para o que é clicável.
  * ------------------------------------------------------------------------ */
-ion-header::after {
-  display: none;
+/* O Ionic dá à barra de título a sombra do Material (elevação 4), que projeta
+   um degradê de uns 12px sobre o conteúdo. Aqui a separação é a borda de baixo
+   do ion-toolbar, logo abaixo.
+   O seletor precisa da classe: o Ionic aplica a sombra em `.header-md`, e
+   `ion-header` sozinho — um seletor de elemento — perde para ela. */
+ion-header.header-md,
+ion-header.header-ios {
+  box-shadow: none;
 }
 
 ion-toolbar {
@@ -126,12 +132,28 @@ ion-content ion-list ion-item {
   margin-bottom: 0;
 }
 
-ion-list-header ion-label {
+/* Cabeçalhos de seção: o de uma lista inteira (ion-list-header) e o de um
+   grupo dentro dela (ion-item-divider — as famílias, na tela de instrumentos).
+   No padrão do Ionic o texto sai cinza-claro sobre uma faixa quase da mesma
+   cor: 2,7:1 de contraste, ilegível de relance.
+   O estilo vai no cabeçalho, e não no ion-label dentro dele: o ion-label traz
+   `font-size: inherit` e `color: var(--color)` com `--color: initial` por um
+   seletor de classe, que ganha de um `... ion-label` nosso. Posto aqui, o
+   rótulo herda — que é como o Ionic espera que se faça. */
+ion-list-header,
+ion-item-divider {
+  --color: var(--srme-texto-suave);
+
   font-size: 0.8125rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--srme-texto-suave);
+}
+
+/* A faixa suave é só do divisor de grupo: ele separa blocos dentro da mesma
+   lista, então precisa se distinguir dos itens em volta. */
+ion-item-divider {
+  --background: var(--srme-realce);
 }
 
 ion-item h2 {
@@ -342,6 +364,10 @@ ion-tab-button ion-label {
      ion-tab-button como filho. */
   ion-app ion-tab-bar::before {
     content: "SRME";
+    /* Sem isto a borda de baixo fica FORA dos 56px (o padrão é content-box) e
+       a linha do menu cai 1px abaixo da linha da barra de título, que termina
+       na mesma altura. */
+    box-sizing: border-box;
     position: absolute;
     top: 0;
     left: 0;
