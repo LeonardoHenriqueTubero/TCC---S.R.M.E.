@@ -49,18 +49,13 @@ export class ElectronCapacitorApp {
   private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     new MenuItem({ label: 'Quit App', role: 'quit' }),
   ];
-  private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
-    { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
-    { role: 'viewMenu' },
-  ];
   private mainWindowState;
   private loadWebApp;
   private customScheme: string;
 
   constructor(
     capacitorFileConfig: CapacitorElectronConfig,
-    trayMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[],
-    appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]
+    trayMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]
   ) {
     this.CapacitorFileConfig = capacitorFileConfig;
 
@@ -68,10 +63,6 @@ export class ElectronCapacitorApp {
 
     if (trayMenuTemplate) {
       this.TrayMenuTemplate = trayMenuTemplate;
-    }
-
-    if (appMenuBarMenuTemplate) {
-      this.AppMenuBarMenuTemplate = appMenuBarMenuTemplate;
     }
 
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
@@ -153,8 +144,24 @@ export class ElectronCapacitorApp {
       this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
     }
 
-    // Setup the main manu bar at the top of our window.
-    Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
+    // Sem barra de menu. O "File"/"View" que vinha do modelo do Electron só
+    // oferecia recarregar a página, abrir as ferramentas de desenvolvedor e
+    // ajustar o zoom — coisas de quem constrói o app, não de quem o usa, e que
+    // deixavam o programa com cara de projeto inacabado.
+    //
+    // Junto com o menu vão embora os atalhos que ele registrava: o Ctrl+Q para
+    // sair (o botão de fechar da janela continua valendo) e o F11 da tela
+    // cheia, este devolvido logo abaixo.
+    Menu.setApplicationMenu(null);
+
+    // O F11 estava no menu "View" removido acima, mas não tem nada de
+    // ferramenta de desenvolvedor: é o atalho de tela cheia que qualquer um
+    // espera de um programa de computador.
+    this.MainWindow.webContents.on('before-input-event', (_event, input) => {
+      if (input.type === 'keyDown' && input.key === 'F11') {
+        this.MainWindow.setFullScreen(!this.MainWindow.isFullScreen());
+      }
+    });
 
     this.loadMainWindow(this);
 
