@@ -1,0 +1,84 @@
+import { Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { IonButton, IonIcon } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { informationCircleOutline } from 'ionicons/icons';
+import { PreRequisito } from '../../core/services/pre-requisitos.service';
+
+addIcons({ informationCircleOutline });
+
+/**
+ * Diz o que falta cadastrar antes, no lugar do "nada aqui ainda".
+ *
+ * A tela de músicos e a de lançamentos dependem de outras telas terem sido
+ * preenchidas primeiro, e isso não era óbvio para quem abria o app pela
+ * primeira vez. Além do texto, cada pendência vira um atalho para a aba certa.
+ */
+@Component({
+  selector: 'app-aviso-pre-requisitos',
+  imports: [RouterLink, IonButton, IonIcon],
+  template: `
+    <div class="aviso">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <h2>Falta um passo antes</h2>
+      <p>Para cadastrar {{ oQue() }}, primeiro é preciso ter {{ pendencias() }}.</p>
+
+      <div class="atalhos">
+        @for (item of faltando(); track item.nome) {
+          <ion-button fill="outline" size="small" [routerLink]="item.rota">
+            Cadastrar {{ item.artigo }} {{ item.nome }}
+          </ion-button>
+        }
+      </div>
+    </div>
+  `,
+  styles: `
+    .aviso {
+      border: 1px solid var(--srme-borda-cor);
+      border-radius: var(--srme-raio);
+      background: var(--ion-item-background);
+      padding: 28px 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    ion-icon {
+      font-size: 40px;
+      color: var(--ion-color-primary);
+    }
+
+    h2 {
+      margin: 12px 0 6px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: var(--srme-texto-suave);
+      font-size: 0.9375rem;
+    }
+
+    .atalhos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+  `,
+})
+export class AvisoPreRequisitosComponent {
+  /** O que o usuário está tentando cadastrar: "um músico", "um lançamento". */
+  readonly oQue = input.required<string>();
+  readonly faltando = input.required<PreRequisito[]>();
+
+  /** "uma casa de oração e um instrumento" — vírgulas no meio, "e" no fim. */
+  protected readonly pendencias = computed(() => {
+    const nomes = this.faltando().map((item) => `${item.artigo} ${item.nome}`);
+    if (nomes.length <= 1) {
+      return nomes.join('');
+    }
+    return `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`;
+  });
+}

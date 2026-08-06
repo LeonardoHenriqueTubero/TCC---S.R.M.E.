@@ -29,6 +29,8 @@ import { LancamentoService } from '../../core/services/lancamento.service';
 import { LancamentoComMusicos } from '../../core/models/lancamento-musico.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
+import { AvisoPreRequisitosComponent } from '../../shared/components/aviso-pre-requisitos.component';
+import { PreRequisito, PreRequisitosService } from '../../core/services/pre-requisitos.service';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -37,6 +39,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   templateUrl: './lancamento.page.html',
   styleUrls: ['./lancamento.page.scss'],
   imports: [
+    AvisoPreRequisitosComponent,
     BotaoTemaComponent,
     RouterLink,
     IonHeader,
@@ -65,8 +68,12 @@ export class LancamentoPage {
   private readonly lancamentoService = inject(LancamentoService);
   private readonly confirmacao = inject(ConfirmacaoService);
   private readonly database = inject(Database);
+  private readonly preRequisitos = inject(PreRequisitosService);
 
   lancamentos: LancamentoComMusicos[] = [];
+  // Vazio = dá para cadastrar. Com itens, o botão de novo lançamento fica
+  // desabilitado e a tela explica o que falta.
+  faltando: PreRequisito[] = [];
   carregando = true;
 
   constructor() {
@@ -82,7 +89,10 @@ export class LancamentoPage {
 
   async carregar(): Promise<void> {
     this.carregando = true;
-    this.lancamentos = await this.lancamentoService.listarComMusicos();
+    [this.lancamentos, this.faltando] = await Promise.all([
+      this.lancamentoService.listarComMusicos(),
+      this.preRequisitos.paraLancamento(),
+    ]);
     this.carregando = false;
   }
 

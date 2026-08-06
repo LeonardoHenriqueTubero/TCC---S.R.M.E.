@@ -7,8 +7,15 @@
     <ion-buttons slot="end">
       <app-botao-tema></app-botao-tema>
     </ion-buttons>
+    <!-- Desabilitado enquanto faltar casa, evento ou músico: sem eles o
+         formulário não tem o que oferecer nos campos. -->
     <ion-buttons slot="end" class="acao-da-tela">
-      <ion-button fill="solid" color="primary" routerLink="/lancamentos/novo">
+      <ion-button
+        fill="solid"
+        color="primary"
+        routerLink="/lancamentos/novo"
+        [disabled]="faltando.length > 0"
+      >
         <ion-icon slot="start" name="add-outline"></ion-icon>
         Novo lançamento
       </ion-button>
@@ -26,6 +33,10 @@
             <ion-spinner></ion-spinner>
           </div>
         } @else {
+          @if (faltando.length > 0) {
+            <app-aviso-pre-requisitos oQue="um lançamento" [faltando]="faltando" />
+          }
+
           @for (lancamento of lancamentos; track lancamento.id) {
             <ion-card>
               <ion-card-header>
@@ -59,7 +70,10 @@
               </ion-card-content>
             </ion-card>
           } @empty {
-            <p class="ion-padding">Nenhum lançamento cadastrado.</p>
+            <!-- Quando há pendências, quem explica o vazio é o aviso acima. -->
+            @if (faltando.length === 0) {
+              <p class="ion-padding">Nenhum lançamento cadastrado.</p>
+            }
           }
         }
 
@@ -68,7 +82,7 @@
   </ion-grid>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button routerLink="/lancamentos/novo">
+    <ion-fab-button routerLink="/lancamentos/novo" [disabled]="faltando.length > 0">
       <ion-icon name="add-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>

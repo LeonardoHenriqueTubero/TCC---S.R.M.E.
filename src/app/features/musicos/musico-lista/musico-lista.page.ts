@@ -25,6 +25,8 @@ import { MusicoService } from '../../../core/services/musico.service';
 import { Musico, MusicoListado } from '../../../core/models/musico.model';
 import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../../shared/components/botao-tema.component';
+import { AvisoPreRequisitosComponent } from '../../../shared/components/aviso-pre-requisitos.component';
+import { PreRequisito, PreRequisitosService } from '../../../core/services/pre-requisitos.service';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -33,6 +35,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   templateUrl: './musico-lista.page.html',
   styleUrls: ['./musico-lista.page.scss'],
   imports: [
+    AvisoPreRequisitosComponent,
     BotaoTemaComponent,
     RouterLink,
     IonHeader,
@@ -57,8 +60,12 @@ export class MusicoListaPage {
   private readonly musicoService = inject(MusicoService);
   private readonly confirmacao = inject(ConfirmacaoService);
   private readonly database = inject(Database);
+  private readonly preRequisitos = inject(PreRequisitosService);
 
   musicos: MusicoListado[] = [];
+  // Vazio = dá para cadastrar. Com itens, o botão de novo músico fica
+  // desabilitado e a tela explica o que falta.
+  faltando: PreRequisito[] = [];
   carregando = true;
 
   constructor() {
@@ -74,7 +81,10 @@ export class MusicoListaPage {
 
   async carregarMusicos(): Promise<void> {
     this.carregando = true;
-    this.musicos = await this.musicoService.listarComNomes();
+    [this.musicos, this.faltando] = await Promise.all([
+      this.musicoService.listarComNomes(),
+      this.preRequisitos.paraMusico(),
+    ]);
     this.carregando = false;
   }
 

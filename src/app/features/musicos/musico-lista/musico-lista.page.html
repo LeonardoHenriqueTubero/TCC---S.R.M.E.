@@ -7,8 +7,15 @@
     <ion-buttons slot="end">
       <app-botao-tema></app-botao-tema>
     </ion-buttons>
+    <!-- Desabilitado enquanto faltar casa de oração ou instrumento: sem eles o
+         formulário abre com os dois selects vazios e não há como salvar. -->
     <ion-buttons slot="end" class="acao-da-tela">
-      <ion-button fill="solid" color="primary" routerLink="/musicos/novo">
+      <ion-button
+        fill="solid"
+        color="primary"
+        routerLink="/musicos/novo"
+        [disabled]="faltando.length > 0"
+      >
         <ion-icon slot="start" name="add-outline"></ion-icon>
         Novo músico
       </ion-button>
@@ -26,6 +33,14 @@
             <ion-spinner></ion-spinner>
           </div>
         } @else {
+          @if (faltando.length > 0) {
+            <app-aviso-pre-requisitos oQue="um músico" [faltando]="faltando" />
+          }
+
+          <!-- Com pendências e nenhum músico não há tabela nenhuma a mostrar:
+               quem explica o vazio é o aviso acima, e um cabeçalho de colunas
+               sobre uma lista vazia só faria confusão. -->
+          @if (musicos.length > 0 || faltando.length === 0) {
           <!-- Cabeçalho das colunas: existe só no computador, onde a lista tem
                largura para virar tabela. No celular ele fica escondido e a
                linha continua sendo nome e cargo, um sobre o outro. -->
@@ -61,6 +76,7 @@
               </ion-item>
             }
           </ion-list>
+          }
         }
 
       </ion-col>
@@ -68,7 +84,7 @@
   </ion-grid>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button routerLink="/musicos/novo">
+    <ion-fab-button routerLink="/musicos/novo" [disabled]="faltando.length > 0">
       <ion-icon name="add-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
