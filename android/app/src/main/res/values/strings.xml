@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">srme</string>
-    <string name="title_activity_main">srme</string>
-    <string name="package_name">io.ionic.starter</string>
-    <string name="custom_url_scheme">io.ionic.starter</string>
+    <string name="app_name">S.R.M.E.</string>
+    <string name="title_activity_main">S.R.M.E.</string>
+    <string name="package_name">br.com.tubero.srme</string>
+    <string name="custom_url_scheme">br.com.tubero.srme</string>
 </resources>

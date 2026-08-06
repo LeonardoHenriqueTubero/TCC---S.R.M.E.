@@ -4,7 +4,7 @@ android {
     namespace = "io.ionic.starter"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "io.ionic.starter"
+        applicationId "br.com.tubero.srme"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -18,6 +18,11 @@ android {
     }
     buildTypes {
         release {
+            // Assinado com a chave de depuracao, a pedido: o APK instala e roda
+            // em qualquer aparelho e substitui a versao anterior, mas nao serve
+            // para a Play Store. Trocar por uma chave propria e so criar um
+            // signingConfigs.release e apontar para ele aqui.
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
