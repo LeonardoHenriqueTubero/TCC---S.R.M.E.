@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+# Empacota a versão de Windows a partir do Linux.
+#
+#   ./empacotar-windows.sh          # 64 bits (padrão)
+#   ./empacotar-windows.sh ia32     # 32 bits
+#
+# Por que não é só `electron-builder --win`: o electron-builder recompila os
+# módulos nativos sempre para a plataforma do host. O SQLite é um módulo nativo,
+# então o instalador de Windows saía com o binário .node do LINUX dentro — e o
+# app abria no Windows sem banco nenhum, porque a biblioteca não carrega.
+#
+# A saída é baixar o binário de Windows pronto (o projeto do better-sqlite3
+# publica um para cada arquitetura e cada ABI do Electron), pô-lo no lugar e
+# empacotar com o npmRebuild desligado, para o electron-builder não desfazer a
+# troca. E é por isso que 32 e 64 bits precisam de uma passada cada: só cabe um
+# binário por vez em node_modules.
+#
+# ATENÇÃO à versão do Electron: os binários de Windows existem até a ABI 146,
+# que é a do Electron 42. Subir para o 43 (ABI 148) quebra este script — foi
+# exatamente o que aconteceu e o motivo de o projeto estar no 42.
+#
+# O binário do Linux é devolvido no fim, senão o `npm run electron:start` desta
+# máquina passaria a carregar uma DLL de Windows.
+
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+ARQUITETURA="${1:-x64}"
+if [ "$ARQUITETURA" != "x64" ] && [ "$ARQUITETURA" != "ia32" ]; then
+  echo "ERRO: arquitetura '$ARQUITETURA' — use x64 ou ia32." >&2
+  exit 1
+fi
+
+SQLITE_DIR="node_modules/better-sqlite3-multiple-ciphers"
+BINARIO="$SQLITE_DIR/build/Release/better_sqlite3.node"
+GUARDADO="$(mktemp -d)/better_sqlite3.linux.node"
+ELECTRON="$(node -p "require('electron/package.json').version")"
+
+echo "==> Windows $ARQUITETURA, Electron $ELECTRON; guardando o binário do Linux"
+cp "$BINARIO" "$GUARDADO"
+# Devolve o binário do Linux aconteça o que acontecer, inclusive se o
+# empacotamento falhar no meio.
+trap 'cp "$GUARDADO" "$BINARIO"; echo "==> binário do Linux devolvido"' EXIT
+
+echo "==> baixando o binário de Windows ($ARQUITETURA) do SQLite"
+(cd "$SQLITE_DIR" && npx --yes prebuild-install \
+  --runtime=electron --target="$ELECTRON" --arch="$ARQUITETURA" --platform=win32)
+
+# Confere que veio mesmo o que se pediu: um .node de 64 bits dentro do
+# instalador de 32 não daria erro nenhum aqui, só na máquina do usuário.
+DESCRICAO="$(file -b "$BINARIO")"
+case "$ARQUITETURA" in
+  x64)  ESPERADO="PE32+" ;;
+  ia32) ESPERADO="PE32 " ;;
+esac
+if ! echo "$DESCRICAO" | grep -q "MS Windows" || ! echo "$DESCRICAO" | grep -q "^$ESPERADO"; then
+  echo "ERRO: o binário baixado não bate com $ARQUITETURA — $DESCRICAO" >&2
+  exit 1
+fi
+echo "    ok: $DESCRICAO"
+
+echo "==> empacotando"
+npm run build
+npx electron-builder build --win --"$ARQUITETURA" \
+  -c ./electron-builder.config.json -c.npmRebuild=false -p never

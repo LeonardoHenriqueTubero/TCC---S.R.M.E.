@@ -1,7 +1,7 @@
 {
   "name": "srme",
   "version": "1.0.0",
-  "description": "SRME - Sistema de Registro de Membros e Eventos",
+  "description": "Sistema de Registro de Músicos em Eventos",
   "homepage": "https://github.com/leonardotubero/srme",
   "author": {
     "name": "Leonardo Tubero",
@@ -19,7 +19,9 @@
     "electron:start": "npm run build && env -u ELECTRON_RUN_AS_NODE electron --inspect=5858 ./",
     "electron:pack": "npm run build && electron-builder build --dir -c ./electron-builder.config.json",
     "electron:make": "npm run build && electron-builder build -c ./electron-builder.config.json -p always",
-    "electron:make:linux": "npm run build && electron-builder build --linux -c ./electron-builder.config.json -p never"
+    "electron:make:linux": "npm run build && electron-builder build --linux -c ./electron-builder.config.json -p never",
+    "electron:make:win": "./empacotar-windows.sh x64",
+    "electron:make:win32": "./empacotar-windows.sh ia32"
   },
   "dependencies": {
     "@capacitor-community/electron": "^5.0.0",
@@ -36,7 +38,7 @@
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
-    "electron": "^43.3.0",
+    "electron": "^42.8.1",
     "electron-builder": "^26.15.3",
     "electron-rebuild": "^3.2.9",
     "typescript": "^5.0.4"

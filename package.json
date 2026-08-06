@@ -12,9 +12,12 @@
     "lint": "ng lint",
     "android:sync": "ng build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "android:release": "npm run android:sync && cd android && ./gradlew assembleRelease",
     "electron:sync": "ng build && cap copy @capacitor-community/electron && cp capacitor.config.ts electron/capacitor.config.ts",
     "electron:start": "npm run electron:sync && npm --prefix electron run electron:start",
-    "electron:dist": "npm run electron:sync && npm --prefix electron run electron:make:linux"
+    "electron:dist": "npm run electron:sync && npm --prefix electron run electron:make:linux",
+    "electron:dist:win": "npm run electron:sync && npm --prefix electron run electron:make:win",
+    "electron:dist:win32": "npm run electron:sync && npm --prefix electron run electron:make:win32"
   },
   "private": true,
   "dependencies": {
