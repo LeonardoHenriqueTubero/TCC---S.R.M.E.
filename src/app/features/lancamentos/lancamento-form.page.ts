@@ -31,6 +31,7 @@ import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { Evento } from '../../core/models/evento.model';
 import { Musico } from '../../core/models/musico.model';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
+import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '../../core/limites';
 
 @Component({
   selector: 'app-lancamento-form',
@@ -62,6 +63,14 @@ import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adapt
   ],
 })
 export class LancamentoFormPage implements OnInit {
+  // Calculadas uma vez, na abertura da tela: o formulário não fica aberto
+  // tempo suficiente para a virada do dia importar.
+  protected readonly dataMinima = dataMinima();
+  protected readonly dataMaxima = dataMaxima();
+  // Só para a mensagem de erro: ninguém lê 2016-08-06 de primeira.
+  protected readonly intervaloDeDatas =
+    `${comoBrasileiro(dataMinima())} e ${comoBrasileiro(dataMaxima())}`;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly lancamentoService = inject(LancamentoService);
   private readonly casaOracaoService = inject(CasaOracaoService);
@@ -82,7 +91,7 @@ export class LancamentoFormPage implements OnInit {
   private lancamentoId?: number;
 
   form = this.formBuilder.nonNullable.group({
-    data: ['', Validators.required],
+    data: ['', [Validators.required, dataDentroDoIntervalo()]],
     // 0 = nada escolhido; min(1) segura o formulário até selecionar de verdade.
     local: [0, [Validators.required, Validators.min(1)]],
     evento: [0, [Validators.required, Validators.min(1)]],

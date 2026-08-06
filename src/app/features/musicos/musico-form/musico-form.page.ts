@@ -23,6 +23,7 @@ import { InstrumentoService } from '../../../core/services/instrumento.service';
 import { CasaOracao } from '../../../core/models/casa-oracao.model';
 import { Instrumento } from '../../../core/models/instrumento.model';
 import { SelecaoAdaptavelDirective } from '../../../shared/directives/selecao-adaptavel.directive';
+import { TAMANHO_MAXIMO } from '../../../core/limites';
 
 @Component({
   selector: 'app-musico-form',
@@ -48,6 +49,8 @@ import { SelecaoAdaptavelDirective } from '../../../shared/directives/selecao-ad
   ],
 })
 export class MusicoFormPage implements OnInit {
+  protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly musicoService = inject(MusicoService);
   private readonly casaOracaoService = inject(CasaOracaoService);
@@ -68,10 +71,10 @@ export class MusicoFormPage implements OnInit {
   // Não há campo "ativo" aqui: todo músico novo nasce ativo, e a exclusão
   // (que marca ativo = 0) é feita pela lista, não por este formulário.
   form = this.formBuilder.nonNullable.group({
-    nome: ['', Validators.required],
+    nome: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.nome)]],
     oficializado: ['', Validators.required],
     batizado: ['', Validators.required],
-    cargo: ['', Validators.required],
+    cargo: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.cargo)]],
     // Começam em 0 (nenhuma opção tem id 0), então o Validators.min(1) mantém
     // o formulário inválido até o usuário escolher uma casa/instrumento reais
     // nos <ion-select>. O valor guardado é o id da casa/instrumento.

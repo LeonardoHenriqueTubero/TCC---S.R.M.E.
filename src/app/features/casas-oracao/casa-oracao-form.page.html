@@ -14,11 +14,13 @@
 
         <form [formGroup]="form" (ngSubmit)="salvar()">
           <ion-item>
-            <ion-input formControlName="nome" label="Nome" labelPlacement="stacked" type="text"></ion-input>
+            <ion-input formControlName="nome" label="Nome" labelPlacement="stacked" type="text"
+              [maxlength]="TAMANHO_MAXIMO.nome"></ion-input>
           </ion-item>
 
           <ion-item>
-            <ion-input formControlName="cidade" label="Cidade" labelPlacement="stacked" type="text"></ion-input>
+            <ion-input formControlName="cidade" label="Cidade" labelPlacement="stacked" type="text"
+              [maxlength]="TAMANHO_MAXIMO.cidade"></ion-input>
           </ion-item>
 
           <ion-button expand="block" type="submit" [disabled]="form.invalid" class="ion-margin-top">

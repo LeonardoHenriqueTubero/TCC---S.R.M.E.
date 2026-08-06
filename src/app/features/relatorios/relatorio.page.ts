@@ -39,6 +39,7 @@ import { PdfService, Relatorio } from '../../shared/services/pdf.service';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
+import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '../../core/limites';
 
 addIcons({
   peopleOutline,
@@ -110,6 +111,12 @@ interface OpcaoRelatorio {
   ],
 })
 export class RelatorioPage {
+  protected readonly dataMinima = dataMinima();
+  protected readonly dataMaxima = dataMaxima();
+  // Só para a mensagem de erro: ninguém lê 2016-08-06 de primeira.
+  protected readonly intervaloDeDatas =
+    `${comoBrasileiro(dataMinima())} e ${comoBrasileiro(dataMaxima())}`;
+
   private readonly relatorioService = inject(RelatorioService);
   private readonly musicoService = inject(MusicoService);
   private readonly casaOracaoService = inject(CasaOracaoService);
@@ -135,8 +142,8 @@ export class RelatorioPage {
     musicoId: [0],
     casaId: [TODAS_AS_CASAS],
     familias: [[] as string[]],
-    dataInicial: [''],
-    dataFinal: [''],
+    dataInicial: ['', dataDentroDoIntervalo()],
+    dataFinal: ['', dataDentroDoIntervalo()],
   });
 
   readonly opcoes: OpcaoRelatorio[] = [
@@ -211,6 +218,12 @@ export class RelatorioPage {
 
     if (this.precisaDe('periodo')) {
       if (!valores.dataInicial || !valores.dataFinal || this.periodoInvertido) {
+        return true;
+      }
+      // O intervalo permitido é conferido pelos validadores dos dois campos.
+      // Este getter não olha o estado do formulário em nenhum outro ponto, e
+      // sem esta linha uma data digitada fora do intervalo passaria batido.
+      if (this.filtros.controls.dataInicial.invalid || this.filtros.controls.dataFinal.invalid) {
         return true;
       }
     }

@@ -14,8 +14,17 @@
 
         <form [formGroup]="form" (ngSubmit)="salvar()">
           <ion-item>
-            <ion-input formControlName="data" label="Data" labelPlacement="stacked" type="date"></ion-input>
+            <!-- min/max fecham o calendario no intervalo; quem barra a data digitada
+                 e o validador no componente. -->
+            <ion-input formControlName="data" label="Data" labelPlacement="stacked" type="date"
+              [min]="dataMinima" [max]="dataMaxima"></ion-input>
           </ion-item>
+
+          @if (form.controls.data.invalid && form.controls.data.value) {
+            <ion-note color="danger" class="ion-padding erro">
+              A data precisa estar entre {{ intervaloDeDatas }}.
+            </ion-note>
+          }
 
           <ion-item>
             <ion-select

@@ -14,7 +14,8 @@
 
         <form [formGroup]="form" (ngSubmit)="salvar()">
           <ion-item>
-            <ion-input formControlName="nome" label="Nome" labelPlacement="stacked" type="text"></ion-input>
+            <ion-input formControlName="nome" label="Nome" labelPlacement="stacked" type="text"
+              [maxlength]="TAMANHO_MAXIMO.nomeInstrumento"></ion-input>
           </ion-item>
 
           <ion-item>

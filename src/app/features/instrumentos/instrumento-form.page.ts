@@ -19,6 +19,7 @@ import {
 } from '@ionic/angular/standalone';
 import { InstrumentoService } from '../../core/services/instrumento.service';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
+import { TAMANHO_MAXIMO } from '../../core/limites';
 
 @Component({
   selector: 'app-instrumento-form',
@@ -43,6 +44,8 @@ import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adapt
   ],
 })
 export class InstrumentoFormPage implements OnInit {
+  protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly instrumentoService = inject(InstrumentoService);
   private readonly route = inject(ActivatedRoute);
@@ -55,7 +58,7 @@ export class InstrumentoFormPage implements OnInit {
   private instrumentoId?: number;
 
   form = this.formBuilder.nonNullable.group({
-    nome: ['', Validators.required],
+    nome: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.nomeInstrumento)]],
     familia: ['', Validators.required],
   });
 

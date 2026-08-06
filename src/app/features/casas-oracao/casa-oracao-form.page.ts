@@ -16,6 +16,7 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
+import { TAMANHO_MAXIMO } from '../../core/limites';
 
 @Component({
   selector: 'app-casa-oracao-form',
@@ -37,6 +38,8 @@ import { CasaOracaoService } from '../../core/services/casa-oracao.service';
   ],
 })
 export class CasaOracaoFormPage implements OnInit {
+  protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly casaOracaoService = inject(CasaOracaoService);
   private readonly route = inject(ActivatedRoute);
@@ -46,8 +49,8 @@ export class CasaOracaoFormPage implements OnInit {
   private casaId?: number;
 
   form = this.formBuilder.nonNullable.group({
-    nome: ['', Validators.required],
-    cidade: ['', Validators.required],
+    nome: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.nome)]],
+    cidade: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.cidade)]],
   });
 
   async ngOnInit(): Promise<void> {

@@ -16,6 +16,7 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { EventoService } from '../../core/services/evento.service';
+import { TAMANHO_MAXIMO } from '../../core/limites';
 
 @Component({
   selector: 'app-evento-form',
@@ -37,6 +38,8 @@ import { EventoService } from '../../core/services/evento.service';
   ],
 })
 export class EventoFormPage implements OnInit {
+  protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+
   private readonly formBuilder = inject(FormBuilder);
   private readonly eventoService = inject(EventoService);
   private readonly route = inject(ActivatedRoute);
@@ -46,7 +49,7 @@ export class EventoFormPage implements OnInit {
   private eventoId?: number;
 
   form = this.formBuilder.nonNullable.group({
-    nome: ['', Validators.required],
+    nome: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.nome)]],
   });
 
   async ngOnInit(): Promise<void> {

@@ -85,6 +85,8 @@
                 label="Data inicial"
                 labelPlacement="stacked"
                 type="date"
+                [min]="dataMinima"
+                [max]="dataMaxima"
               ></ion-input>
             </ion-item>
 
@@ -94,6 +96,8 @@
                 label="Data final"
                 labelPlacement="stacked"
                 type="date"
+                [min]="dataMinima"
+                [max]="dataMaxima"
               ></ion-input>
             </ion-item>
           }
@@ -137,6 +141,12 @@
           @if (periodoInvertido) {
             <ion-note color="danger" class="ion-padding erro">
               A data final não pode ser anterior à data inicial.
+            </ion-note>
+          } @else if (
+            filtros.controls.dataInicial.invalid || filtros.controls.dataFinal.invalid
+          ) {
+            <ion-note color="danger" class="ion-padding erro">
+              A data precisa estar entre {{ intervaloDeDatas }}.
             </ion-note>
           }
         </form>
