@@ -5,6 +5,16 @@ import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacito
 const NOME_BANCO = 'srme';
 const VERSAO_BANCO = 1;
 
+// Liga e desliga os dados de amostra. Com `false` o app abre com todas as
+// tabelas vazias, como na mão de quem o instala pela primeira vez — é assim que
+// dá para testar o caminho do usuário novo, inclusive os avisos de "cadastre
+// uma casa de oração antes".
+//
+// ATENÇÃO: isto não apaga nada. Um banco já semeado continua com os dados; para
+// começar limpo é preciso remover o arquivo .db (desktop) ou limpar os dados do
+// app (Android).
+const SEMEAR_DADOS_DE_AMOSTRA = false;
+
 // SQL dos dados iniciais de cada tabela, separado da lógica para o seed ficar
 // fácil de ler e editar. A coluna `ativo` não é preenchida aqui de propósito:
 // a tabela já a define com DEFAULT 1, então todo registro semeado nasce ativo.
@@ -148,6 +158,10 @@ export class Database {
   // o que ainda não existe. Toda a repetição que antes ficava em vários métodos
   // agora está concentrada aqui.
   private async semear(): Promise<void> {
+    if (!SEMEAR_DADOS_DE_AMOSTRA) {
+      return;
+    }
+
     for (const { tabela, sql } of SEEDS) {
       if ((await this.contar(tabela)) === 0) {
         await this.db.execute(sql);
