@@ -35,6 +35,7 @@ const SEED_INSTRUMENTOS = `
   INSERT INTO instrumento (nome, familia) VALUES ('Trombone', 'Metais');
   INSERT INTO instrumento (nome, familia) VALUES ('Bombardino', 'Metais');
   INSERT INTO instrumento (nome, familia) VALUES ('Tuba', 'Metais');
+  INSERT INTO instrumento (nome, familia) VALUES ('Órgão', 'Teclas');
 `;
 
 const SEED_CASAS_ORACAO = `
@@ -52,7 +53,7 @@ const SEED_EVENTOS = `
 `;
 
 // Depende de casaOracao (comum_congregacao) e instrumento já semeados.
-// Os ids batem com a ordem de inserção acima (casas 1-3, instrumentos 1-16).
+// Os ids batem com a ordem de inserção acima (casas 1-3, instrumentos 1-17).
 const SEED_MUSICOS = `
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('João Silva', 'Sim', 'Sim', 'Músico', 1, 1, 1);
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Pedro Santos', 'Sim', 'Sim', 'Instrutor', 1, 1, 12);
@@ -62,6 +63,7 @@ const SEED_MUSICOS = `
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Rafael Lima', 'Não', 'Não', 'Músico', 1, 3, 10);
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Marcos Pereira', 'Sim', 'Sim', 'Músico', 1, 1, 3);
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Felipe Rocha', 'Não', 'Não', 'Candidato', 1, 2, 16);
+  INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Maria Oliveira', 'Sim', 'Sim', 'Organista', 1, 1, 17);
 `;
 
 // Depende de casaOracao (local), evento e musico já semeados.
@@ -77,6 +79,7 @@ const SEED_LANCAMENTOS = `
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 4);
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 5);
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 7);
+  INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (1, 9);
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 3);
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 4);
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (2, 8);

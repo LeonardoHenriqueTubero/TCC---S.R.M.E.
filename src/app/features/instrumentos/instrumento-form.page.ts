@@ -52,7 +52,7 @@ export class InstrumentoFormPage implements OnInit {
   private readonly router = inject(Router);
 
   // As famílias são fixas (as mesmas usadas no seed), então ficam direto aqui.
-  readonly familias = ['Cordas', 'Madeiras', 'Metais'];
+  readonly familias = ['Cordas', 'Madeiras', 'Metais', 'Teclas'];
 
   modoEdicao = false;
   private instrumentoId?: number;
