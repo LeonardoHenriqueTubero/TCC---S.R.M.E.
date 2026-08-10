@@ -206,13 +206,11 @@ ion-searchbar {
  * isto o Ionic o estica de cima a baixo e sobra um vazio enorme sob dois
  * campos de formulário.
  * ------------------------------------------------------------------------ */
-@media (min-width: 768px) {
-  ion-modal {
-    --width: 480px;
-    --height: 440px;
-    --border-radius: var(--srme-raio);
-    --box-shadow: 0 10px 40px rgba(28, 37, 48, 0.2);
-  }
+html.srme-desktop ion-modal {
+  --width: 480px;
+  --height: 440px;
+  --border-radius: var(--srme-raio);
+  --box-shadow: 0 10px 40px rgba(28, 37, 48, 0.2);
 }
 /* A altura é fixa de propósito. Com `--height: auto` o ion-modal encolhe até
    sobrar só o cabeçalho: para a altura acompanhar o conteúdo seria preciso um
@@ -249,27 +247,36 @@ ion-tab-button ion-label {
 
 /* Com seis abas os rótulos não cabem em celulares estreitos: no padrão do
    Ionic (fonte 12px) a barra pede 420px e estoura numa tela de 360px,
-   cortando "Músicos" e "Relatórios". */
-@media (max-width: 480px) {
-  ion-tab-button {
-    --padding-start: 2px;
-    --padding-end: 2px;
-  }
+   cortando "Músicos" e "Relatórios". Aqui a largura ainda decide, porque a
+   diferença é entre um celular e outro — não entre celular e computador. */
+html.srme-celular {
+  @media (max-width: 480px) {
+    ion-tab-button {
+      --padding-start: 2px;
+      --padding-end: 2px;
+    }
 
-  ion-tab-button ion-label {
-    font-size: 10px;
+    ion-tab-button ion-label {
+      font-size: 10px;
+    }
   }
 }
 
-@media (min-width: 992px) {
-  /* -------------------------------------------------------------------------
-   * No computador o app deixa de imitar o celular.
-   *
-   * O que muda: a ação principal sai do botão flutuante e vai para a barra de
-   * título; o conteúdo ocupa a largura da janela em vez de uma coluna estreita
-   * no meio; as linhas ficam mais baixas e reagem ao ponteiro, com o aspecto
-   * de uma tabela em vez de uma lista de toque.
-   * ---------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+ * No computador o app deixa de imitar o celular.
+ *
+ * O que muda: a ação principal sai do botão flutuante e vai para a barra de
+ * título; o conteúdo ocupa a largura da janela em vez de uma coluna estreita
+ * no meio; as linhas ficam mais baixas e reagem ao ponteiro, com o aspecto
+ * de uma tabela em vez de uma lista de toque.
+ *
+ * Quem liga tudo isso é a classe que o FormatoService põe no <html> na abertura
+ * do app, e não a largura da janela. A diferença aparece no desktop: encolher a
+ * janela costumava devolver a cara de celular no meio do uso — a barra lateral
+ * saltava para baixo, o botão da barra de título virava botão flutuante. Agora
+ * quem escolhe é a plataforma, então o formato fica o mesmo do começo ao fim.
+ * ------------------------------------------------------------------------ */
+html.srme-desktop {
   .acao-da-tela {
     display: flex;
   }
@@ -287,9 +294,9 @@ ion-tab-button ion-label {
   }
 
   /* As telas nascem com a coluna estreita e centralizada que faz sentido no
-     celular (size-lg="8" offset-lg="2"). Na janela larga isso deixaria um
-     terço da tela vazio, então o recorte é desfeito aqui, num lugar só, em vez
-     de espalhar breakpoints por cada template. */
+     celular (size-lg="8" offset-lg="2"). No computador isso deixaria um terço
+     da tela vazio, então o recorte é desfeito aqui, num lugar só, em vez de
+     espalhar breakpoints por cada template. */
   ion-content ion-grid {
     max-width: 1180px;
     margin-inline: auto;

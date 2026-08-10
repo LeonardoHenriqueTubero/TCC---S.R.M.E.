@@ -117,10 +117,9 @@
 // lê como cartão de celular flutuando sobre o fundo, e não como a tabela que
 // aquela tela é. Quem separa uma superfície da outra ali é a borda — a mesma
 // escolha que o tema escuro faz logo abaixo.
-@media (min-width: 992px) {
-  :root {
-    --srme-sombra: none;
-  }
+// A classe vem do FormatoService, aplicada na abertura do app.
+:root.srme-desktop {
+  --srme-sombra: none;
 }
 
 // ---------------------------------------------------------------------------

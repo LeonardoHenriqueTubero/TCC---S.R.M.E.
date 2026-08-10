@@ -103,6 +103,12 @@ export class ElectronCapacitorApp {
       y: this.mainWindowState.y,
       width: this.mainWindowState.width,
       height: this.mainWindowState.height,
+      // O app não vira mais aplicativo de celular quando a janela encolhe (ver
+      // FormatoService): no computador ele é sempre um programa de computador.
+      // O piso existe por causa disso — abaixo daqui a barra lateral e as
+      // colunas das listagens não teriam onde caber.
+      minWidth: 900,
+      minHeight: 620,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,

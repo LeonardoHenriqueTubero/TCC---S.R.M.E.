@@ -11,7 +11,9 @@
   display: none;
 }
 
-@media (min-width: 992px) {
+// A classe no <html> vem do FormatoService, e não da largura da janela (ver
+// global.scss).
+:host-context(html.srme-desktop) {
   // Espaço que os dois botões de ação ocupam no fim da linha: cada um mede
   // 32px e é precedido de 12px de folga, mais os 16px de --inner-padding-end
   // do ion-item. O cabeçalho recua o mesmo tanto à direita; sem isso ele

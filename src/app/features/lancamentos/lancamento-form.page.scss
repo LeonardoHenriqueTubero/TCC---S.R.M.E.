@@ -14,11 +14,11 @@
   overscroll-behavior: contain;
 }
 
-// Na tela grande sobra altura, então a caixa mostra mais nomes de uma vez.
-@media (min-width: 992px) {
-  .rol-musicos {
-    max-height: 442px; // 8 linhas e meia
-  }
+// No computador sobra altura, então a caixa mostra mais nomes de uma vez. A
+// classe no <html> vem do FormatoService, e não da largura da janela (ver
+// global.scss).
+:host-context(html.srme-desktop) .rol-musicos {
+  max-height: 442px; // 8 linhas e meia
 }
 
 // O aviso de data fora do intervalo é uma mensagem do formulário, não um
