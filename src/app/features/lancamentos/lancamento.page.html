@@ -45,11 +45,43 @@
                 <ion-card-subtitle>{{ lancamento.nomeCasaOracao }}</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content>
-                @for (musico of lancamento.musicos; track musico.id) {
-                  <ion-chip>
-                    <ion-label>{{ musico.nome }}</ion-label>
-                  </ion-chip>
-                } @empty {
+                <!-- Fechado, o card diz só quantos foram; quem quiser os nomes
+                     abre a relação. Ver o `abertos` no componente. -->
+                @if (lancamento.musicos.length > 0) {
+                  <div class="resumo-musicos">
+                    <span class="quantidade">{{ resumoMusicos(lancamento) }}</span>
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      (click)="alternarMusicos(lancamento.id)"
+                      [attr.aria-expanded]="estaAberto(lancamento.id)"
+                    >
+                      {{ estaAberto(lancamento.id) ? 'Mostrar menos' : 'Mostrar mais' }}
+                      <ion-icon
+                        slot="end"
+                        [name]="estaAberto(lancamento.id) ? 'chevron-up-outline' : 'chevron-down-outline'"
+                      ></ion-icon>
+                    </ion-button>
+                  </div>
+
+                  @if (estaAberto(lancamento.id)) {
+                    <!-- A relação rola dentro da própria caixa: sem isso um
+                         lançamento de cinquenta músicos viraria uma página
+                         inteira e empurraria os outros para fora da tela. -->
+                    <div class="rol-musicos">
+                      <ion-list lines="full">
+                        @for (musico of lancamento.musicos; track musico.id) {
+                          <ion-item>
+                            <ion-label>
+                              <h2>{{ musico.nome }}</h2>
+                              <p>{{ musico.instrumentoNome ?? '—' }}</p>
+                            </ion-label>
+                          </ion-item>
+                        }
+                      </ion-list>
+                    </div>
+                  }
+                } @else {
                   <p>Nenhum músico neste lançamento.</p>
                 }
 

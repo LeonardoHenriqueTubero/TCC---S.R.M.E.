@@ -13,7 +13,8 @@ import {
   IonCardTitle,
   IonCardSubtitle,
   IonCardContent,
-  IonChip,
+  IonList,
+  IonItem,
   IonLabel,
   IonSpinner,
   IonFab,
@@ -23,7 +24,13 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
+import {
+  addOutline,
+  chevronDownOutline,
+  chevronUpOutline,
+  createOutline,
+  trashOutline,
+} from 'ionicons/icons';
 import { Database } from '../../core/database/database';
 import { LancamentoService } from '../../core/services/lancamento.service';
 import { LancamentoComMusicos } from '../../core/models/lancamento-musico.model';
@@ -32,7 +39,7 @@ import { BotaoTemaComponent } from '../../shared/components/botao-tema.component
 import { AvisoPreRequisitosComponent } from '../../shared/components/aviso-pre-requisitos.component';
 import { PreRequisito, PreRequisitosService } from '../../core/services/pre-requisitos.service';
 
-addIcons({ addOutline, createOutline, trashOutline });
+addIcons({ addOutline, chevronDownOutline, chevronUpOutline, createOutline, trashOutline });
 
 @Component({
   selector: 'app-lancamento',
@@ -54,7 +61,8 @@ addIcons({ addOutline, createOutline, trashOutline });
     IonCardTitle,
     IonCardSubtitle,
     IonCardContent,
-    IonChip,
+    IonList,
+    IonItem,
     IonLabel,
     IonSpinner,
     IonFab,
@@ -76,6 +84,16 @@ export class LancamentoPage {
   faltando: PreRequisito[] = [];
   carregando = true;
 
+  // Ids dos lançamentos com a relação de músicos aberta. Todo card nasce
+  // fechado: com trinta ou mais nomes, mostrá-los sempre afogava a data, o
+  // evento e a casa de oração — que é o que se procura ao correr a lista.
+  //
+  // Guardar por id, e não uma bandeira dentro do lançamento, é o que faz a
+  // escolha sobreviver ao recarregamento: a tela se recarrega inteira a cada
+  // gravação no banco (ver o effect no construtor), e o que estava aberto
+  // fecharia sozinho no meio do uso.
+  private readonly abertos = new Set<number>();
+
   constructor() {
     // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
     // no banco (criar/editar/excluir, aqui ou em outra tela). Isso também cobre
@@ -94,6 +112,24 @@ export class LancamentoPage {
       this.preRequisitos.paraLancamento(),
     ]);
     this.carregando = false;
+  }
+
+  estaAberto(lancamentoId: number): boolean {
+    return this.abertos.has(lancamentoId);
+  }
+
+  alternarMusicos(lancamentoId: number): void {
+    if (!this.abertos.delete(lancamentoId)) {
+      this.abertos.add(lancamentoId);
+    }
+  }
+
+  // O que o card mostra com a relação fechada. O singular existe porque
+  // "1 músicos" salta aos olhos numa lista em que quase todo lançamento tem um
+  // punhado deles.
+  resumoMusicos(lancamento: LancamentoComMusicos): string {
+    const quantidade = lancamento.musicos.length;
+    return quantidade === 1 ? '1 músico' : `${quantidade} músicos`;
   }
 
   // Pergunta antes de excluir; a exclusão é lógica (marca ativo = 0), então o

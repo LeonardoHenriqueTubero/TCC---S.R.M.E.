@@ -1,8 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
 import { Lancamento } from '../models/lancamento.model';
-import { LancamentoComMusicos } from '../models/lancamento-musico.model';
-import { Musico } from '../models/musico.model';
+import { LancamentoComMusicos, MusicoDoLancamento } from '../models/lancamento-musico.model';
 
 @Injectable({
   providedIn: 'root',
@@ -34,11 +33,14 @@ export class LancamentoService {
       // Sem filtro por m.ativo: um lançamento é um registro histórico, então
       // quem participou continua listado mesmo que o músico tenha sido excluído
       // depois. (O músico some da aba Músicos e dos formulários, não daqui.)
+      // LEFT JOIN no instrumento: o músico pode não ter um, e o cadastro dele
+      // pode ter sido excluído depois de vinculado.
       const musicosResultado = await conexao.query(
         `
-        SELECT m.*
+        SELECT m.*, i.nome AS instrumentoNome
         FROM musico m
         JOIN lancamento_musico lm ON lm.id_musico = m.id
+        LEFT JOIN instrumento i ON i.id = m.instrumento
         WHERE lm.id_lancamento = ?
         ORDER BY m.nome;
         `,
@@ -47,7 +49,7 @@ export class LancamentoService {
 
       completos.push({
         ...lancamento,
-        musicos: (musicosResultado.values ?? []) as Musico[],
+        musicos: (musicosResultado.values ?? []) as MusicoDoLancamento[],
       });
     }
 
