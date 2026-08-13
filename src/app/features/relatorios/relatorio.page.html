@@ -43,6 +43,25 @@
     </ion-row>
   </ion-grid>
 
+  <!-- O relatório pronto, antes de virar arquivo. Só aparece no computador; no
+       celular o compartilhar do sistema já entrega o PDF (ver o `gerar`). -->
+  <ion-modal
+    class="modal-visualizacao"
+    [isOpen]="emVisualizacao !== null"
+    (didDismiss)="fecharVisualizacao()"
+  >
+    <ng-template>
+      @if (emVisualizacao; as relatorio) {
+        <app-visualizacao-relatorio
+          [relatorio]="relatorio"
+          [emitidoEm]="emitidoEm()"
+          (fechar)="fecharVisualizacao()"
+          (baixar)="baixarDaVisualizacao()"
+        />
+      }
+    </ng-template>
+  </ion-modal>
+
   <!-- Um modal só para os dois relatórios com filtro: os campos exibidos vêm
        da lista `campos` da opção escolhida. -->
   <ion-modal [isOpen]="emFiltro !== null" (didDismiss)="fecharFiltro()">

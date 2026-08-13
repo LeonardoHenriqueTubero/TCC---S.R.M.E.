@@ -441,3 +441,47 @@ html.srme-desktop {
 .alerta-perigo {
   color: var(--ion-color-danger);
 }
+
+/* ---------------------------------------------------------------------------
+ * Impressão
+ *
+ * Só se imprime uma coisa no app inteiro: a folha da pré-visualização de
+ * relatório. Na hora de imprimir, ela é copiada para uma div solta no fim do
+ * <body> (ver visualizacao-relatorio.component.ts) — de onde o navegador
+ * consegue paginá-la, coisa que não aconteceria dentro do ion-modal, que é
+ * recortado no tamanho da tela.
+ *
+ * As regras precisam estar aqui, e não no componente: o #area-impressao fica
+ * fora da árvore dele, e ninguém mais alcança o ion-app.
+ * ------------------------------------------------------------------------ */
+#area-impressao {
+  display: none;
+}
+
+@media print {
+  /* O app inteiro sai de cena; fica só a cópia da folha. */
+  ion-app {
+    display: none !important;
+  }
+
+  #area-impressao {
+    display: block;
+  }
+
+  /* Na tela a folha tem largura de A4, sombra e um cinza em volta para parecer
+     papel. No papel ela É a página, então nada disso faz sentido. */
+  #area-impressao .folha {
+    max-width: none;
+    box-shadow: none;
+  }
+
+  /* Os 8mm somados aos 28px de recuo interno da folha dão os ~14mm que o
+     pdf.service.ts usa de margem, então o impresso sai com o enquadramento do
+     PDF. Não é 0 de propósito: com margem zero a tarja azul iria até a borda do
+     papel, como no PDF, mas impressora nenhuma imprime até lá — ela apararia a
+     tarja e parte do texto. */
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+}

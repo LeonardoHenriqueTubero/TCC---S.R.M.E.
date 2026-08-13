@@ -66,6 +66,19 @@ const FUNDO_ALTERNADO: [number, number, number] = [240, 244, 249];
 export class PdfService {
   private readonly plataforma = Capacitor.getPlatform();
 
+  /**
+   * Se esta plataforma mostra o relatório na tela antes de entregar o arquivo.
+   *
+   * Anda junto com o `entregar()` lá embaixo: onde a entrega é um download
+   * (computador), a pré-visualização faz sentido e é de onde se manda imprimir;
+   * onde a entrega é o compartilhar do sistema (celular), o próprio aplicativo
+   * que recebe o PDF já o mostra e oferece imprimir, então uma tela nossa no
+   * meio do caminho só atrasaria.
+   */
+  get temPreVisualizacao(): boolean {
+    return this.plataforma === 'web' || this.plataforma === 'electron';
+  }
+
   async gerar(relatorio: Relatorio): Promise<void> {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -303,7 +316,8 @@ export class PdfService {
     return doc.output('datauristring').split(',')[1];
   }
 
-  private dataDeHoje(): string {
+  /** Pública porque a pré-visualização mostra a mesma data do PDF. */
+  dataDeHoje(): string {
     return new Date().toLocaleDateString('pt-BR');
   }
 }

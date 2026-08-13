@@ -39,6 +39,7 @@ import { PdfService, Relatorio } from '../../shared/services/pdf.service';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
+import { VisualizacaoRelatorioComponent } from './visualizacao-relatorio.component';
 import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '../../core/limites';
 
 addIcons({
@@ -85,6 +86,7 @@ interface OpcaoRelatorio {
   templateUrl: './relatorio.page.html',
   styleUrls: ['./relatorio.page.scss'],
   imports: [
+    VisualizacaoRelatorioComponent,
     SelecaoAdaptavelDirective,
     BotaoTemaComponent,
     ReactiveFormsModule,
@@ -130,6 +132,10 @@ export class RelatorioPage {
 
   /** Relatório aguardando os filtros, ou null com o modal fechado. */
   emFiltro: OpcaoRelatorio | null = null;
+
+  /** Relatório pronto, à espera de ser impresso ou baixado — só no computador
+   *  (ver `temPreVisualizacao`). No celular ele vai direto para o PDF. */
+  emVisualizacao: Relatorio | null = null;
 
   // Carregados sob demanda, só quando o modal que usa cada lista abre.
   musicos: Musico[] = [];
@@ -194,6 +200,32 @@ export class RelatorioPage {
         }),
     },
   ];
+
+  emitidoEm(): string {
+    return this.pdf.dataDeHoje();
+  }
+
+  fecharVisualizacao(): void {
+    this.emVisualizacao = null;
+  }
+
+  // O botão "Baixar PDF" da pré-visualização: monta o arquivo com o mesmo
+  // relatório que está na tela e o entrega como antes.
+  async baixarDaVisualizacao(): Promise<void> {
+    const relatorio = this.emVisualizacao;
+    if (!relatorio) {
+      return;
+    }
+
+    try {
+      await this.pdf.gerar(relatorio);
+    } catch (erro) {
+      await this.confirmacao.avisar(
+        'Não foi possível gerar o PDF',
+        erro instanceof Error ? erro.message : 'Tente novamente.'
+      );
+    }
+  }
 
   // O select usa 0 para "todas" (e -1 para "ainda não escolhi"); o serviço
   // espera null nesses dois casos.
@@ -307,7 +339,14 @@ export class RelatorioPage {
         return;
       }
 
-      await this.pdf.gerar(relatorio);
+      // No computador o relatório aparece na tela primeiro, e é de lá que sai
+      // o imprimir ou o baixar; no celular o compartilhar do sistema já resolve
+      // os dois, então o arquivo é entregue direto.
+      if (this.pdf.temPreVisualizacao) {
+        this.emVisualizacao = relatorio;
+      } else {
+        await this.pdf.gerar(relatorio);
+      }
     } catch (erro) {
       await this.confirmacao.avisar(
         'Não foi possível gerar o PDF',
