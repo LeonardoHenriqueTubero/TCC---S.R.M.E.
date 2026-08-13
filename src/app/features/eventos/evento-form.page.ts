@@ -16,12 +16,14 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { EventoService } from '../../core/services/evento.service';
+import { FaltaPreencherComponent } from '../../shared/components/falta-preencher.component';
 import { TAMANHO_MAXIMO } from '../../core/limites';
 
 @Component({
   selector: 'app-evento-form',
   templateUrl: './evento-form.page.html',
   imports: [
+    FaltaPreencherComponent,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,
@@ -39,6 +41,7 @@ import { TAMANHO_MAXIMO } from '../../core/limites';
 })
 export class EventoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+  protected readonly ROTULOS = { nome: 'Nome' };
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly eventoService = inject(EventoService);

@@ -31,6 +31,7 @@ import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { Evento } from '../../core/models/evento.model';
 import { Musico } from '../../core/models/musico.model';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
+import { FaltaPreencherComponent } from '../../shared/components/falta-preencher.component';
 import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '../../core/limites';
 
 @Component({
@@ -38,6 +39,7 @@ import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '.
   templateUrl: './lancamento-form.page.html',
   styleUrls: ['./lancamento-form.page.scss'],
   imports: [
+    FaltaPreencherComponent,
     SelecaoAdaptavelDirective,
     ReactiveFormsModule,
     IonHeader,
@@ -70,6 +72,13 @@ export class LancamentoFormPage implements OnInit {
   // Só para a mensagem de erro: ninguém lê 2016-08-06 de primeira.
   protected readonly intervaloDeDatas =
     `${comoBrasileiro(dataMinima())} e ${comoBrasileiro(dataMaxima())}`;
+
+  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
+  protected readonly ROTULOS = {
+    data: 'Data',
+    local: 'Casa de oração',
+    evento: 'Evento',
+  };
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly lancamentoService = inject(LancamentoService);
@@ -142,6 +151,13 @@ export class LancamentoFormPage implements OnInit {
     } else {
       this.musicosSelecionados = [...this.musicosSelecionados, id];
     }
+  }
+
+  // A escolha dos músicos não é um campo do FormGroup, então a pendência dela
+  // não sai do formulário: entra na mensagem por fora (ver o `extras` do
+  // FaltaPreencherComponent).
+  protected pendenciasExtras(): string[] {
+    return this.musicosSelecionados.length === 0 ? ['pelo menos um músico'] : [];
   }
 
   async salvar(): Promise<void> {

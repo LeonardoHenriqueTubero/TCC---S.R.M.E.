@@ -16,12 +16,14 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
+import { FaltaPreencherComponent } from '../../shared/components/falta-preencher.component';
 import { TAMANHO_MAXIMO } from '../../core/limites';
 
 @Component({
   selector: 'app-casa-oracao-form',
   templateUrl: './casa-oracao-form.page.html',
   imports: [
+    FaltaPreencherComponent,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,
@@ -39,6 +41,8 @@ import { TAMANHO_MAXIMO } from '../../core/limites';
 })
 export class CasaOracaoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
+  protected readonly ROTULOS = { nome: 'Nome', cidade: 'Cidade' };
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly casaOracaoService = inject(CasaOracaoService);

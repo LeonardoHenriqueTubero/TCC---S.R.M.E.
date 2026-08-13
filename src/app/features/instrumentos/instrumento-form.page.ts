@@ -18,6 +18,7 @@ import {
   IonButton,
 } from '@ionic/angular/standalone';
 import { InstrumentoService } from '../../core/services/instrumento.service';
+import { FaltaPreencherComponent } from '../../shared/components/falta-preencher.component';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
 import { TAMANHO_MAXIMO } from '../../core/limites';
 
@@ -25,6 +26,7 @@ import { TAMANHO_MAXIMO } from '../../core/limites';
   selector: 'app-instrumento-form',
   templateUrl: './instrumento-form.page.html',
   imports: [
+    FaltaPreencherComponent,
     SelecaoAdaptavelDirective,
     ReactiveFormsModule,
     IonHeader,
@@ -45,6 +47,8 @@ import { TAMANHO_MAXIMO } from '../../core/limites';
 })
 export class InstrumentoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
+  protected readonly ROTULOS = { nome: 'Nome', familia: 'Família' };
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly instrumentoService = inject(InstrumentoService);

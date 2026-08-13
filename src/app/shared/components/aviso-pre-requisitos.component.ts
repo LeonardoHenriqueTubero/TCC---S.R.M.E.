@@ -4,6 +4,7 @@ import { IonButton, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { informationCircleOutline } from 'ionicons/icons';
 import { PreRequisito } from '../../core/services/pre-requisitos.service';
+import { listaEmPortugues } from '../../core/texto';
 
 addIcons({ informationCircleOutline });
 
@@ -74,11 +75,7 @@ export class AvisoPreRequisitosComponent {
   readonly faltando = input.required<PreRequisito[]>();
 
   /** "uma casa de oração e um instrumento" — vírgulas no meio, "e" no fim. */
-  protected readonly pendencias = computed(() => {
-    const nomes = this.faltando().map((item) => `${item.artigo} ${item.nome}`);
-    if (nomes.length <= 1) {
-      return nomes.join('');
-    }
-    return `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`;
-  });
+  protected readonly pendencias = computed(() =>
+    listaEmPortugues(this.faltando().map((item) => `${item.artigo} ${item.nome}`))
+  );
 }

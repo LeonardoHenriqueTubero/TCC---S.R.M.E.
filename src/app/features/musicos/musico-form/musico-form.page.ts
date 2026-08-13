@@ -23,6 +23,7 @@ import { InstrumentoService } from '../../../core/services/instrumento.service';
 import { CasaOracao } from '../../../core/models/casa-oracao.model';
 import { Instrumento } from '../../../core/models/instrumento.model';
 import { SelecaoAdaptavelDirective } from '../../../shared/directives/selecao-adaptavel.directive';
+import { FaltaPreencherComponent } from '../../../shared/components/falta-preencher.component';
 import { TAMANHO_MAXIMO } from '../../../core/limites';
 
 @Component({
@@ -30,6 +31,7 @@ import { TAMANHO_MAXIMO } from '../../../core/limites';
   templateUrl: './musico-form.page.html',
   styleUrls: ['./musico-form.page.scss'],
   imports: [
+    FaltaPreencherComponent,
     SelecaoAdaptavelDirective,
     ReactiveFormsModule,
     IonHeader,
@@ -50,6 +52,15 @@ import { TAMANHO_MAXIMO } from '../../../core/limites';
 })
 export class MusicoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
+  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
+  protected readonly ROTULOS = {
+    nome: 'Nome',
+    cargo: 'Cargo',
+    oficializado: 'Oficializado',
+    batizado: 'Batizado',
+    comum_congregacao: 'Casa de oração',
+    instrumento: 'Instrumento',
+  };
 
   private readonly formBuilder = inject(FormBuilder);
   private readonly musicoService = inject(MusicoService);

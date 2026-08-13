@@ -87,6 +87,12 @@
             </div>
           </ion-list>
 
+          <app-falta-preencher
+            [form]="form"
+            [rotulos]="ROTULOS"
+            [extras]="pendenciasExtras()"
+          />
+
           <ion-button
             expand="block"
             type="submit"

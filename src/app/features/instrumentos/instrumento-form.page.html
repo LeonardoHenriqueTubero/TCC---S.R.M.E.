@@ -31,6 +31,8 @@
             </ion-select>
           </ion-item>
 
+          <app-falta-preencher [form]="form" [rotulos]="ROTULOS" />
+
           <ion-button expand="block" type="submit" [disabled]="form.invalid" class="ion-margin-top">
             Salvar
           </ion-button>
