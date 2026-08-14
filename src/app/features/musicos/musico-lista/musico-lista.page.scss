@@ -21,6 +21,20 @@
   // nomeia (eram 17px de desencontro).
   $recuo-acoes: 12px + 32px + 12px + 32px + 16px;
 
+  // Largura das colunas de instrumento e casa de oração. Uma variável só, lida
+  // pelo cabeçalho e pelas linhas, é o que mantém cada legenda sobre o seu dado.
+  //
+  // Ela cede junto com a janela. Fixas em 180px, as duas somavam 376px que não
+  // encolhiam nunca, e quem pagava a conta era sempre o nome: com a janela no
+  // menor tamanho que ela aceita (900px, ver setup.ts), sobravam pouco mais de
+  // 100px para ele, e um nome curto como "Antony" quebrava em três pedaços, uma
+  // sílaba por linha.
+  //
+  // O clamp mantém os mesmos 180px na janela larga e cede até 96px quando
+  // aperta. Como as duas colunas leem a mesma variável, elas encolhem juntas e
+  // o alinhamento com o cabeçalho continua de pé.
+  --largura-coluna: clamp(96px, 13vw, 180px);
+
   .cabecalho-tabela {
     display: flex;
     align-items: center;
@@ -49,8 +63,18 @@
 
   .cabecalho-tabela .coluna,
   .colunas-tabela .coluna {
-    width: 180px;
-    flex: 0 0 180px;
+    width: var(--largura-coluna);
+    flex: 0 0 var(--largura-coluna);
+  }
+
+  // Numa coluna estreita, o que não couber vira reticências em vez de quebrar
+  // em duas linhas: quem manda na altura da linha é o nome com o cargo embaixo,
+  // e uma casa de oração de nome comprido engordaria a lista inteira. O nome
+  // continua inteiro — ele é o dado que se procura, e agora tem espaço.
+  .colunas-tabela .coluna {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   // Medida fixa nos botões da linha: é o que permite calcular o recuo do
