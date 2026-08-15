@@ -45,12 +45,12 @@ export interface FiltroCasa {
   casaId: number | null;
 }
 
-/** Uma casa de oração com quantos músicos ativos ela tem — o denominador das
- *  porcentagens da relação final. */
-interface TotalDaCasa {
+/** Uma casa de oração na relação final. O denominador das porcentagens não vem
+ *  daqui: ele é contado a partir das famílias escolhidas (ver
+ *  `relacaoDasOrquestras`). */
+interface CasaDaRelacao {
   id: number;
   nome: string;
-  total: number;
 }
 
 /** Um músico presente num evento. O instrumento e a família são nulos quando o
@@ -254,17 +254,20 @@ export class RelatorioService {
   }
 
   // A relação final: uma linha por casa, com a fatia que cada família escolhida
-  // ocupa no efetivo dela. O denominador é o total de músicos ativos da casa
-  // (inclusive quem toca outra família), então as porcentagens só somam 100%
-  // quando todas as famílias estão selecionadas.
+  // ocupa entre os músicos das famílias escolhidas.
+  //
+  // O denominador conta só quem toca as famílias pedidas, e não o efetivo
+  // inteiro da casa. Com o efetivo inteiro, escolher uma família só dava uma
+  // tabela sem sentido: a coluna de total mostrava os 9 músicos da casa ao lado
+  // de uma linha que falava de 3. Assim as porcentagens somam 100% do que a
+  // tabela mostra, e o número e a porcentagem falam da mesma coisa.
   private async relacaoDasOrquestras(filtro: FiltroFamilia): Promise<SecaoRelatorio | null> {
     const conexao = this.dbService.getConexao();
     const porCasa = filtro.casaId !== null;
 
-    const totaisConsulta = await conexao.query(
+    const casasConsulta = await conexao.query(
       `
-      SELECT c.id, c.nome,
-             (SELECT COUNT(*) FROM musico m WHERE m.comum_congregacao = c.id AND m.ativo = 1) AS total
+      SELECT c.id, c.nome
       FROM casaOracao c
       WHERE c.ativo = 1 ${porCasa ? 'AND c.id = ?' : ''}
       ORDER BY c.nome;
@@ -272,7 +275,7 @@ export class RelatorioService {
       porCasa ? [filtro.casaId] : []
     );
 
-    const casas = (totaisConsulta.values ?? []) as TotalDaCasa[];
+    const casas = (casasConsulta.values ?? []) as CasaDaRelacao[];
     if (casas.length === 0) {
       return null;
     }
@@ -299,15 +302,22 @@ export class RelatorioService {
     const quantos = (casaId: number, familia: string): number =>
       contagens.find((c) => c.casaId === casaId && c.familia === familia)?.total ?? 0;
 
+    // Cada músico tem um instrumento só, então somar as famílias não conta
+    // ninguém duas vezes.
+    const nasFamilias = (casaId: number): number =>
+      filtro.familias.reduce((soma, familia) => soma + quantos(casaId, familia), 0);
+
     const linhas: (string | number)[][] = casas.map((casa) => [
       casa.nome,
-      ...filtro.familias.map((familia) => this.percentual(quantos(casa.id, familia), casa.total)),
-      casa.total,
+      ...filtro.familias.map((familia) =>
+        this.percentual(quantos(casa.id, familia), nasFamilias(casa.id))
+      ),
+      nasFamilias(casa.id),
     ]);
 
     // Com uma casa só, a linha de total seria a repetição da linha acima.
     if (casas.length > 1) {
-      const efetivo = casas.reduce((soma, casa) => soma + casa.total, 0);
+      const efetivo = casas.reduce((soma, casa) => soma + nasFamilias(casa.id), 0);
       linhas.push([
         'TOTAL',
         ...filtro.familias.map((familia) => {
@@ -320,7 +330,7 @@ export class RelatorioService {
 
     return {
       titulo: 'Relação final das orquestras',
-      colunas: ['Casa de Oração', ...filtro.familias, 'Músicos da casa'],
+      colunas: ['Casa de Oração', ...filtro.familias, 'Músicos nas famílias'],
       linhas,
     };
   }
