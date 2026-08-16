@@ -132,6 +132,50 @@ ion-content ion-list ion-item {
   margin-bottom: 0;
 }
 
+/* Superfície de cartão para blocos que não são ion-list — o painel e o aviso
+   de pré-requisitos. É a mesma moldura das listas; estava copiada em cada um
+   deles, e num arquivo só ela muda de uma vez. */
+.srme-cartao {
+  border: 1px solid var(--srme-borda-cor);
+  border-radius: var(--srme-raio);
+  background: var(--ion-item-background);
+  box-shadow: var(--srme-sombra);
+}
+
+/* Bloco de "ainda não há nada aqui": ícone, título, explicação e atalhos,
+   centralizados. Nasceu duas vezes — no painel e no aviso de pré-requisitos —
+   e as duas telas mostram a mesma coisa, então mora aqui. */
+.srme-vazio {
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.srme-vazio > ion-icon {
+  font-size: 40px;
+  color: var(--ion-color-primary);
+}
+
+.srme-vazio h2 {
+  margin: 12px 0 6px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.srme-vazio p {
+  margin: 0 auto;
+  max-width: 46ch;
+  font-size: 0.9375rem;
+  color: var(--srme-texto-suave);
+}
+
+.srme-vazio .atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 /* Cabeçalhos de seção: o de uma lista inteira (ion-list-header) e o de um
    grupo dentro dela (ion-item-divider — as famílias, na tela de instrumentos).
    No padrão do Ionic o texto sai cinza-claro sobre uma faixa quase da mesma

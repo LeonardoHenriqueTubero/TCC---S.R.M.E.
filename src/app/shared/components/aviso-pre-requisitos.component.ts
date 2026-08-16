@@ -19,7 +19,7 @@ addIcons({ informationCircleOutline });
   selector: 'app-aviso-pre-requisitos',
   imports: [RouterLink, IonButton, IonIcon],
   template: `
-    <div class="aviso">
+    <div class="srme-cartao srme-vazio aviso">
       <ion-icon name="information-circle-outline"></ion-icon>
       <h2>Falta um passo antes</h2>
       <p>Para cadastrar {{ oQue() }}, primeiro é preciso ter {{ pendencias() }}.</p>
@@ -35,37 +35,7 @@ addIcons({ informationCircleOutline });
   `,
   styles: `
     .aviso {
-      border: 1px solid var(--srme-borda-cor);
-      border-radius: var(--srme-raio);
-      background: var(--ion-item-background);
-      padding: 28px 20px;
       margin-bottom: 16px;
-      text-align: center;
-    }
-
-    ion-icon {
-      font-size: 40px;
-      color: var(--ion-color-primary);
-    }
-
-    h2 {
-      margin: 12px 0 6px;
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    p {
-      margin: 0;
-      color: var(--srme-texto-suave);
-      font-size: 0.9375rem;
-    }
-
-    .atalhos {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      margin-top: 16px;
     }
   `,
 })

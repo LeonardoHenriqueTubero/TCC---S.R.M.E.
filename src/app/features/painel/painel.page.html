@@ -1,0 +1,126 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Painel</ion-title>
+    <ion-buttons slot="end">
+      <app-botao-tema></app-botao-tema>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="10" offset-md="1" size-lg="8" offset-lg="2">
+
+        @if (carregando) {
+          <div class="ion-text-center ion-padding">
+            <ion-spinner></ion-spinner>
+          </div>
+        } @else if (resumo && vazio) {
+          <!-- Cadastro ainda vazio: um painel de zeros não informa nada, então
+               no lugar dele vai o primeiro passo. -->
+          <div class="srme-cartao srme-vazio">
+            <ion-icon name="sparkles-outline"></ion-icon>
+            <h2>Bem-vindo ao S.R.M.E.</h2>
+            <p>
+              Ainda não há nada cadastrado. Comece pelas casas de oração e pelos instrumentos —
+              os músicos dependem dos dois.
+            </p>
+            <div class="atalhos">
+              <ion-button fill="outline" size="small" routerLink="/tabs/casas">
+                Cadastrar uma casa de oração
+              </ion-button>
+              <ion-button fill="outline" size="small" routerLink="/tabs/instrumentos">
+                Cadastrar um instrumento
+              </ion-button>
+            </div>
+          </div>
+        } @else if (resumo) {
+
+          <!-- Os cinco números do cadastro. Cada um leva à sua aba. -->
+          <div class="numeros">
+            @for (n of numeros(); track n.rotulo) {
+              <a class="srme-cartao numero" [routerLink]="n.rota">
+                <ion-icon [name]="n.icone"></ion-icon>
+                <span class="valor">{{ n.valor }}</span>
+                <span class="rotulo">{{ n.rotulo }}</span>
+              </a>
+            }
+          </div>
+
+          <div class="graficos">
+            <!-- Uma série só, então sem legenda: o título já diz o que está
+                 medido, e cada barra traz o seu número na ponta. -->
+            <section class="srme-cartao cartao">
+              <h2>Composição da orquestra</h2>
+              <p class="apoio">Músicos por família de instrumentos</p>
+
+              @if (resumo.porFamilia.length === 0) {
+                <p class="sem-dados">Nenhum músico com instrumento cadastrado ainda.</p>
+              } @else {
+                <ul class="barras">
+                  @for (f of resumo.porFamilia; track f.nome) {
+                    <li>
+                      <span class="nome">{{ f.nome }}</span>
+                      <span class="trilho">
+                        <span class="barra" [style.width.%]="largura(f.total, maiorFamilia())"></span>
+                      </span>
+                      <span class="quanto">{{ f.total }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+
+            <section class="srme-cartao cartao">
+              <h2>Músicos por casa de oração</h2>
+              <p class="apoio">Quantos estão cadastrados em cada casa</p>
+
+              @if (resumo.porCasa.length === 0) {
+                <p class="sem-dados">Nenhuma casa de oração cadastrada ainda.</p>
+              } @else {
+                <ul class="barras">
+                  @for (c of resumo.porCasa; track c.nome) {
+                    <li>
+                      <span class="nome">{{ c.nome }}</span>
+                      <span class="trilho">
+                        <span class="barra" [style.width.%]="largura(c.total, maiorCasa())"></span>
+                      </span>
+                      <span class="quanto">{{ c.total }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+          </div>
+
+          <section class="srme-cartao cartao">
+            <h2>Últimos lançamentos</h2>
+            <p class="apoio">Os cinco mais recentes</p>
+
+            @if (resumo.recentes.length === 0) {
+              <p class="sem-dados">Nenhum lançamento registrado ainda.</p>
+            } @else {
+              <ul class="recentes">
+                @for (l of resumo.recentes; track l.id) {
+                  <li>
+                    <span class="data">{{ formatarData(l.data) }}</span>
+                    <span class="descricao">
+                      <strong>{{ l.evento ?? '—' }}</strong>
+                      <small>{{ l.casa ?? '—' }}</small>
+                    </span>
+                    <span class="quantos">
+                      {{ l.musicos }} {{ l.musicos === 1 ? 'músico' : 'músicos' }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+        }
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

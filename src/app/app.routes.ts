@@ -6,6 +6,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/tabs/tabs.page').then((m) => m.TabsPage),
     children: [
       {
+        path: 'painel',
+        loadComponent: () => import('./features/painel/painel.page').then((m) => m.PainelPage),
+      },
+      {
         path: 'musicos',
         loadComponent: () =>
           import('./features/musicos/musico-lista/musico-lista.page').then((m) => m.MusicoListaPage),
@@ -36,7 +40,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'musicos',
+        redirectTo: 'painel',
         pathMatch: 'full',
       },
     ],

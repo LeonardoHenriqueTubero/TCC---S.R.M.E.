@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
+  gridOutline,
   peopleOutline,
   businessOutline,
   calendarOutline,
@@ -11,6 +12,7 @@ import {
 } from 'ionicons/icons';
 
 addIcons({
+  gridOutline,
   peopleOutline,
   businessOutline,
   calendarOutline,
