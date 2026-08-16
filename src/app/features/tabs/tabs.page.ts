@@ -9,6 +9,7 @@ import {
   musicalNotesOutline,
   clipboardOutline,
   documentTextOutline,
+  saveOutline,
 } from 'ionicons/icons';
 
 addIcons({
@@ -19,6 +20,7 @@ addIcons({
   musicalNotesOutline,
   clipboardOutline,
   documentTextOutline,
+  saveOutline,
 });
 
 @Component({

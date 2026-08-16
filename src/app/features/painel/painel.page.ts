@@ -25,6 +25,7 @@ import {
 import { Database } from '../../core/database/database';
 import { PainelService, ResumoPainel } from '../../core/services/painel.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
+import { MenuBotaoComponent } from '../../shared/components/menu-botao.component';
 
 addIcons({
   peopleOutline,
@@ -42,6 +43,7 @@ addIcons({
   imports: [
     RouterLink,
     BotaoTemaComponent,
+    MenuBotaoComponent,
     IonHeader,
     IonToolbar,
     IonTitle,

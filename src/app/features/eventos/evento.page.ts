@@ -25,6 +25,7 @@ import { EventoService } from '../../core/services/evento.service';
 import { Evento } from '../../core/models/evento.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
+import { MenuBotaoComponent } from '../../shared/components/menu-botao.component';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -33,6 +34,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   templateUrl: './evento.page.html',
   imports: [
     BotaoTemaComponent,
+    MenuBotaoComponent,
     RouterLink,
     IonHeader,
     IonToolbar,

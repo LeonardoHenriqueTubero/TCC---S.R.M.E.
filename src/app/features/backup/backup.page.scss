@@ -1,0 +1,83 @@
+// Backup dos dados
+// ---------------------------------------------------------------------------
+// Os mesmos cartões do painel. As quatro regras de moldura interna estão
+// repetidas de lá de propósito: são poucas linhas e cada tela fica dona do seu
+// espaçamento — a moldura em si (borda, raio, fundo) já vem do .srme-cartao no
+// global.scss.
+.cartao {
+  display: block;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.cartao h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.cartao h2 ion-icon {
+  font-size: 18px;
+  color: var(--ion-color-primary);
+}
+
+.apoio {
+  margin: 6px 0 16px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--srme-texto-suave);
+}
+
+// O alerta de que a importação apaga tudo. Fundo âmbar em vez de vermelho: o
+// vermelho é do que já deu errado, e aqui nada deu — é um aviso do que a ação
+// vai fazer.
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--ion-color-warning-shade);
+  border-radius: var(--srme-raio-pequeno);
+  background: rgba(200, 138, 46, 0.1);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.aviso ion-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 18px;
+  color: var(--ion-color-warning-shade);
+}
+
+// A resposta da última ação, logo abaixo dos dois cartões.
+.recado {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0 4px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ion-color-success-shade);
+}
+
+.recado.erro {
+  color: var(--ion-color-danger);
+}
+
+.recado ion-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+// No celular os botões ocupam a largura toda, como o resto do app; no
+// computador ficam do tamanho do texto.
+:host-context(html.srme-celular) .cartao ion-button {
+  display: block;
+}

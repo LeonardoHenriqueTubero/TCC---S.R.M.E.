@@ -39,6 +39,10 @@ export const routes: Routes = [
           import('./features/relatorios/relatorio.page').then((m) => m.RelatorioPage),
       },
       {
+        path: 'backup',
+        loadComponent: () => import('./features/backup/backup.page').then((m) => m.BackupPage),
+      },
+      {
         path: '',
         redirectTo: 'painel',
         pathMatch: 'full',

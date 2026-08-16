@@ -1,0 +1,98 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <app-menu-botao slot="start"></app-menu-botao>
+    <ion-title>Backup dos dados</ion-title>
+    <ion-buttons slot="end">
+      <app-botao-tema></app-botao-tema>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-md="10" offset-md="1" size-lg="8" offset-lg="2">
+
+        <section class="srme-cartao cartao">
+          <h2>
+            <ion-icon name="download-outline"></ion-icon>
+            Exportar
+          </h2>
+          <p class="apoio">
+            Salva todo o cadastro num arquivo. Guarde-o em outro lugar — no Drive, no e-mail,
+            num pen drive — para poder trazer os dados de volta se trocar de aparelho ou
+            precisar reinstalar o app.
+          </p>
+
+          <ion-button
+            fill="solid"
+            color="primary"
+            [disabled]="exportando || importando"
+            (click)="exportar()"
+          >
+            @if (exportando) {
+              <ion-spinner name="dots" slot="start"></ion-spinner>
+            } @else {
+              <ion-icon slot="start" name="download-outline"></ion-icon>
+            }
+            Exportar dados
+          </ion-button>
+        </section>
+
+        <section class="srme-cartao cartao">
+          <h2>
+            <ion-icon name="document-attach-outline"></ion-icon>
+            Importar
+          </h2>
+          <p class="apoio">
+            Traz de volta um backup exportado antes. O arquivo serve entre aparelhos: dá para
+            exportar no computador e importar no celular.
+          </p>
+
+          <p class="aviso">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>
+              A importação <strong>substitui todo o cadastro atual</strong>. O que estiver
+              salvo hoje será apagado e não há como desfazer. Se tiver dúvida, exporte antes.
+            </span>
+          </p>
+
+          <!-- O seletor de arquivos do sistema, escondido: o botão do Ionic é
+               quem o aciona, para a tela não ter um <input> cru no meio dos
+               componentes. -->
+          <input
+            #escolhaDeArquivo
+            type="file"
+            accept="application/json,.json"
+            hidden
+            (change)="aoEscolherArquivo($event)"
+          />
+
+          <ion-button
+            fill="outline"
+            color="primary"
+            [disabled]="exportando || importando"
+            (click)="escolhaDeArquivo.click()"
+          >
+            @if (importando) {
+              <ion-spinner name="dots" slot="start"></ion-spinner>
+            } @else {
+              <ion-icon slot="start" name="document-attach-outline"></ion-icon>
+            }
+            Escolher arquivo de backup
+          </ion-button>
+        </section>
+
+        @if (recado) {
+          <p class="recado" [class.erro]="recado.tipo === 'erro'">
+            <ion-icon
+              [name]="recado.tipo === 'erro' ? 'alert-circle-outline' : 'checkmark-circle-outline'"
+            ></ion-icon>
+            <span>{{ recado.texto }}</span>
+          </p>
+        }
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

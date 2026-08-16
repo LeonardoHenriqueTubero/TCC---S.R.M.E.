@@ -25,6 +25,7 @@ import { MusicoService } from '../../../core/services/musico.service';
 import { Musico, MusicoListado } from '../../../core/models/musico.model';
 import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../../shared/components/botao-tema.component';
+import { MenuBotaoComponent } from '../../../shared/components/menu-botao.component';
 import { AvisoPreRequisitosComponent } from '../../../shared/components/aviso-pre-requisitos.component';
 import { PreRequisito, PreRequisitosService } from '../../../core/services/pre-requisitos.service';
 
@@ -37,6 +38,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   imports: [
     AvisoPreRequisitosComponent,
     BotaoTemaComponent,
+    MenuBotaoComponent,
     RouterLink,
     IonHeader,
     IonToolbar,

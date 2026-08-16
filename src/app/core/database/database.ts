@@ -1,6 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import {
+  CapacitorSQLite,
+  JsonSQLite,
+  SQLiteConnection,
+  SQLiteDBConnection,
+} from '@capacitor-community/sqlite';
 
 const NOME_BANCO = 'srme';
 const VERSAO_BANCO = 1;
@@ -267,5 +272,52 @@ export class Database {
 
   getConexao(): SQLiteDBConnection {
     return this.db;
+  }
+
+  /** O nome do banco, para quem precisa conferir se um arquivo é deste app. */
+  get nome(): string {
+    return NOME_BANCO;
+  }
+
+  /** Todo o conteúdo do banco — esquema e linhas — no formato do plugin. */
+  async exportar(): Promise<JsonSQLite> {
+    const { export: dados } = await this.db.exportToJson('full');
+
+    if (!dados) {
+      throw new Error('O banco não devolveu nada para exportar.');
+    }
+
+    return dados;
+  }
+
+  /**
+   * Troca TODO o banco pelo conteúdo de um backup. Nada é mesclado: o que
+   * existia antes deixa de existir.
+   *
+   * Devolve quantas linhas foram gravadas.
+   */
+  async restaurar(dados: JsonSQLite): Promise<number> {
+    // `overwrite` não é capricho. Em modo 'full' o plugin compara a versão do
+    // banco aberto com a do arquivo e, quando são iguais, devolve "0
+    // alterações" sem gravar nada — a restauração falharia calada, que é o
+    // pior jeito de um backup falhar. Com `overwrite` ele apaga o arquivo do
+    // banco e o recria a partir do JSON.
+    const completo: JsonSQLite = { ...dados, mode: 'full', overwrite: true };
+
+    // O arquivo do banco está prestes a ser apagado; uma conexão aberta
+    // apontando para ele ficaria escrevendo num arquivo que não existe mais.
+    await this.sqlite.closeConnection(NOME_BANCO, false);
+
+    const { changes } = await this.sqlite.importFromJson(JSON.stringify(completo));
+
+    this.db = await this.abrirConexao();
+    await this.db.open();
+    // O backup pode ser antigo, de antes de alguma coluna existir; as mesmas
+    // rotinas da abertura do app põem o esquema em dia.
+    await this.criarTabelas();
+    await this.migrarEsquema();
+    await this.persistir();
+
+    return changes?.changes ?? 0;
   }
 }

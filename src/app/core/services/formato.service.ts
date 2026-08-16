@@ -26,9 +26,20 @@ const CLASSES: Record<Formato, string> = {
   providedIn: 'root',
 })
 export class FormatoService {
+  /** Decidido uma vez só, na criação do serviço. */
+  readonly formato: Formato = this.detectar();
+
+  /**
+   * Para o pouco que precisa saber o formato em TypeScript, e não em CSS —
+   * hoje, o menu lateral do celular, que no computador nasce desligado.
+   */
+  get ehDesktop(): boolean {
+    return this.formato === 'desktop';
+  }
+
   /** Chamado uma vez na abertura do app, antes das telas aparecerem. */
   iniciar(): void {
-    document.documentElement.classList.add(CLASSES[this.detectar()]);
+    document.documentElement.classList.add(CLASSES[this.formato]);
   }
 
   private detectar(): Formato {

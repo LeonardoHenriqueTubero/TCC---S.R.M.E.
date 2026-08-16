@@ -107,6 +107,31 @@ ion-content ion-list {
   padding: 0;
 }
 
+/* A moldura acima é das listas de dados, que são cartões dentro da página. A
+   lista do menu lateral não é um cartão: ela é a gaveta inteira, e emoldurada
+   parecia um retângulo solto flutuando dentro dela. */
+ion-menu ion-content ion-list.lista-do-menu {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+
+  /* O fundo do ion-list é pintado pelo próprio Ionic, com a cor de item — mais
+     clara que a da gaveta. Como a lista tem a altura do seu conteúdo (aqui, um
+     item só), isso desenhava uma faixa clara no alto do menu e deixava o resto
+     escuro, como se fossem duas superfícies.
+
+     A classe `lista-do-menu` está aqui por causa da especificidade: o Ionic
+     pinta esse fundo em `.list-md`, e um seletor de classe ganha de qualquer
+     quantidade de seletores de elemento. Sem ela, `ion-menu ion-content
+     ion-list` perde e a regra não tem efeito nenhum. */
+  background: transparent;
+}
+
+ion-menu ion-content ion-list.lista-do-menu ion-item {
+  --background: transparent;
+}
+
 ion-item {
   --border-color: var(--srme-borda-cor);
   --padding-start: 16px;
@@ -304,6 +329,13 @@ html.srme-celular {
       font-size: 10px;
     }
   }
+
+  /* Sete abas é o que cabe na largura de um telefone — a oitava sairia com o
+     rótulo cortado. O Backup continua alcançável, pelo menu das três
+     barrinhas; some daqui só o botão da barra de abas. */
+  ion-tab-button.aba-de-rodape {
+    display: none;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -474,6 +506,24 @@ html.srme-desktop {
   /* A aba aberta ganha um fundo suave, além da cor. */
   ion-app ion-tab-button.tab-selected::part(native) {
     background: rgba(var(--ion-color-primary-rgb), 0.12);
+  }
+
+  /* Backup é manutenção, não mais um cadastro: desce para o pé da barra
+     lateral, separado do resto por um fio. O `margin-top: auto` come todo o
+     espaço vago da coluna — é ele que empurra a entrada para baixo por mais
+     curta que fique a lista acima. */
+  ion-app ion-tab-button.aba-de-rodape {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--srme-borda-cor);
+    height: auto;
+  }
+
+  /* No computador a barra lateral já está sempre à vista, com as mesmas
+     entradas: não há gaveta para as três barrinhas abrirem. O menu também
+     nasce desligado (ver app.component.html); isto é a garantia visual. */
+  app-menu-botao {
+    display: none;
   }
 }
 

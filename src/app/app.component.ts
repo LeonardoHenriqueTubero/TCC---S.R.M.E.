@@ -1,11 +1,47 @@
-import { Component } from '@angular/core';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
+import { Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import {
+  IonApp,
+  IonRouterOutlet,
+  IonMenu,
+  IonMenuToggle,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonList,
+  IonListHeader,
+  IonItem,
+  IonIcon,
+  IonLabel,
+} from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { saveOutline } from 'ionicons/icons';
+import { FormatoService } from './core/services/formato.service';
+
+addIcons({ saveOutline });
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
-  imports: [IonApp, IonRouterOutlet],
+  imports: [
+    RouterLink,
+    IonApp,
+    IonRouterOutlet,
+    IonMenu,
+    IonMenuToggle,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonList,
+    IonListHeader,
+    IonItem,
+    IonIcon,
+    IonLabel,
+  ],
 })
 export class AppComponent {
-  constructor() {}
+  /** No computador o menu lateral não é usado: a barra lateral já está à vista. */
+  protected readonly ehDesktop = inject(FormatoService).ehDesktop;
 }

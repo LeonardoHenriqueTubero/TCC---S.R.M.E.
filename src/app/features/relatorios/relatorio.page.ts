@@ -38,6 +38,7 @@ import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { PdfService, Relatorio } from '../../shared/services/pdf.service';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
+import { MenuBotaoComponent } from '../../shared/components/menu-botao.component';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
 import { VisualizacaoRelatorioComponent } from './visualizacao-relatorio.component';
 import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '../../core/limites';
@@ -89,6 +90,7 @@ interface OpcaoRelatorio {
     VisualizacaoRelatorioComponent,
     SelecaoAdaptavelDirective,
     BotaoTemaComponent,
+    MenuBotaoComponent,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,
