@@ -27,8 +27,18 @@
             <ion-spinner></ion-spinner>
           </div>
         } @else {
+          <app-barra-busca
+            placeholder="Buscar por instrumento ou família"
+            substantivo="instrumento"
+            plural="instrumentos"
+            [termo]="termoBusca"
+            [total]="instrumentos.length"
+            [encontrados]="instrumentosEncontrados()"
+            (termoMudou)="termoBusca = $event"
+          />
+
           <ion-list>
-            @for (grupo of grupos; track grupo.familia) {
+            @for (grupo of gruposFiltrados(); track grupo.familia) {
               <ion-item-group>
                 <ion-item-divider>
                   <ion-label>{{ grupo.familia }}</ion-label>
@@ -52,9 +62,11 @@
                 }
               </ion-item-group>
             } @empty {
-              <ion-item>
-                <ion-label>Nenhum instrumento cadastrado.</ion-label>
-              </ion-item>
+              @if (!termoBusca.trim()) {
+                <ion-item>
+                  <ion-label>Nenhum instrumento cadastrado.</ion-label>
+                </ion-item>
+              }
             }
           </ion-list>
         }

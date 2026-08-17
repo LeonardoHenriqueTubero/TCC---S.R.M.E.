@@ -23,6 +23,8 @@ import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
 import { Database } from '../../core/database/database';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
+import { BarraBuscaComponent } from '../../shared/components/barra-busca.component';
+import { contemTermo } from '../../core/texto';
 import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
@@ -34,6 +36,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   selector: 'app-casa-oracao',
   templateUrl: './casa-oracao.page.html',
   imports: [
+    BarraBuscaComponent,
     BotaoTemaComponent,
     MenuBotaoComponent,
     RouterLink,
@@ -64,6 +67,8 @@ export class CasaOracaoPage {
   casas: CasaOracao[] = [];
   carregando = true;
 
+  termoBusca = '';
+
   constructor() {
     // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
     // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
@@ -79,6 +84,12 @@ export class CasaOracaoPage {
     this.carregando = true;
     this.casas = await this.casaOracaoService.listarTodos();
     this.carregando = false;
+  }
+
+  // A cidade entra na busca junto com o nome: é comum haver casas de mesmo nome
+  // em cidades diferentes, e é a cidade que as separa.
+  casasFiltradas(): CasaOracao[] {
+    return this.casas.filter((casa) => contemTermo(this.termoBusca, casa.nome, casa.cidade));
   }
 
   // Bloqueia a exclusão se a casa ainda estiver em uso; caso contrário pergunta

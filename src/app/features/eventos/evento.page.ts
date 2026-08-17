@@ -22,6 +22,8 @@ import { addIcons } from 'ionicons';
 import { addOutline, createOutline, trashOutline } from 'ionicons/icons';
 import { Database } from '../../core/database/database';
 import { EventoService } from '../../core/services/evento.service';
+import { BarraBuscaComponent } from '../../shared/components/barra-busca.component';
+import { contemTermo } from '../../core/texto';
 import { Evento } from '../../core/models/evento.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
@@ -33,6 +35,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   selector: 'app-evento',
   templateUrl: './evento.page.html',
   imports: [
+    BarraBuscaComponent,
     BotaoTemaComponent,
     MenuBotaoComponent,
     RouterLink,
@@ -62,6 +65,8 @@ export class EventoPage {
   eventos: Evento[] = [];
   carregando = true;
 
+  termoBusca = '';
+
   constructor() {
     // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
     // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
@@ -77,6 +82,10 @@ export class EventoPage {
     this.carregando = true;
     this.eventos = await this.eventoService.listarTodos();
     this.carregando = false;
+  }
+
+  eventosFiltrados(): Evento[] {
+    return this.eventos.filter((evento) => contemTermo(this.termoBusca, evento.nome));
   }
 
   // Bloqueia a exclusão se o evento ainda estiver em uso; caso contrário

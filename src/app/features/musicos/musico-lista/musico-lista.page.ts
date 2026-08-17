@@ -28,6 +28,8 @@ import { BotaoTemaComponent } from '../../../shared/components/botao-tema.compon
 import { MenuBotaoComponent } from '../../../shared/components/menu-botao.component';
 import { AvisoPreRequisitosComponent } from '../../../shared/components/aviso-pre-requisitos.component';
 import { PreRequisito, PreRequisitosService } from '../../../core/services/pre-requisitos.service';
+import { BarraBuscaComponent } from '../../../shared/components/barra-busca.component';
+import { contemTermo } from '../../../core/texto';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -36,6 +38,7 @@ addIcons({ addOutline, createOutline, trashOutline });
   templateUrl: './musico-lista.page.html',
   styleUrls: ['./musico-lista.page.scss'],
   imports: [
+    BarraBuscaComponent,
     AvisoPreRequisitosComponent,
     BotaoTemaComponent,
     MenuBotaoComponent,
@@ -70,6 +73,8 @@ export class MusicoListaPage {
   faltando: PreRequisito[] = [];
   carregando = true;
 
+  termoBusca = '';
+
   constructor() {
     // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
     // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
@@ -88,6 +93,15 @@ export class MusicoListaPage {
       this.preRequisitos.paraMusico(),
     ]);
     this.carregando = false;
+  }
+
+  // Casa tambem instrumento, casa de oracao e cargo, e nao so o nome: sao as
+  // colunas que a propria linha mostra, e procurar "violino" para ver quem
+  // toca violino e tao natural quanto procurar por alguem.
+  musicosFiltrados(): MusicoListado[] {
+    return this.musicos.filter((musico) =>
+      contemTermo(this.termoBusca, musico.nome, musico.instrumentoNome, musico.casaNome, musico.cargo)
+    );
   }
 
   // Pergunta antes de excluir; a exclusão é lógica (marca ativo = 0), então o

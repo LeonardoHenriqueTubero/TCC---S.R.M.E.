@@ -28,6 +28,8 @@ import { Instrumento } from '../../core/models/instrumento.model';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
 import { BotaoTemaComponent } from '../../shared/components/botao-tema.component';
 import { MenuBotaoComponent } from '../../shared/components/menu-botao.component';
+import { BarraBuscaComponent } from '../../shared/components/barra-busca.component';
+import { contemTermo } from '../../core/texto';
 
 addIcons({ addOutline, createOutline, trashOutline });
 
@@ -40,6 +42,7 @@ interface GrupoInstrumentos {
   selector: 'app-instrumento',
   templateUrl: './instrumento.page.html',
   imports: [
+    BarraBuscaComponent,
     BotaoTemaComponent,
     MenuBotaoComponent,
     RouterLink,
@@ -68,8 +71,13 @@ export class InstrumentoPage {
   private readonly confirmacao = inject(ConfirmacaoService);
   private readonly database = inject(Database);
 
-  grupos: GrupoInstrumentos[] = [];
+  // A lista plana e a fonte, e os grupos passam a ser calculados: com a busca,
+  // o agrupamento muda a cada tecla, e reagrupar o que ja veio do banco e mais
+  // simples do que filtrar dentro de grupos ja montados.
+  instrumentos: Instrumento[] = [];
   carregando = true;
+
+  termoBusca = '';
 
   constructor() {
     // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
@@ -84,9 +92,24 @@ export class InstrumentoPage {
 
   async carregar(): Promise<void> {
     this.carregando = true;
-    const instrumentos = await this.instrumentoService.listarTodos();
-    this.grupos = this.agruparPorFamilia(instrumentos);
+    this.instrumentos = await this.instrumentoService.listarTodos();
     this.carregando = false;
+  }
+
+  // A familia entra na busca junto com o nome: procurar "metais" traz o grupo
+  // inteiro, que e como se pensa a orquestra. Familia sem nenhum instrumento
+  // encontrado nao aparece, senao a tela ficaria cheia de cabecalhos vazios.
+  gruposFiltrados(): GrupoInstrumentos[] {
+    const encontrados = this.instrumentos.filter((instrumento) =>
+      contemTermo(this.termoBusca, instrumento.nome, instrumento.familia)
+    );
+    return this.agruparPorFamilia(encontrados);
+  }
+
+  // Para a contagem da barra de busca: quantos instrumentos sobraram, e não
+  // quantas famílias.
+  instrumentosEncontrados(): number {
+    return this.gruposFiltrados().reduce((total, grupo) => total + grupo.instrumentos.length, 0);
   }
 
   // Bloqueia a exclusão se o instrumento ainda estiver em uso; caso contrário

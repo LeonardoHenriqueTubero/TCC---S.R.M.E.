@@ -27,8 +27,18 @@
             <ion-spinner></ion-spinner>
           </div>
         } @else {
+          <app-barra-busca
+            placeholder="Buscar evento"
+            substantivo="evento"
+            plural="eventos"
+            [termo]="termoBusca"
+            [total]="eventos.length"
+            [encontrados]="eventosFiltrados().length"
+            (termoMudou)="termoBusca = $event"
+          />
+
           <ion-list>
-            @for (evento of eventos; track evento.id) {
+            @for (evento of eventosFiltrados(); track evento.id) {
               <!-- Os botões ficam soltos no item (o item em si não é clicável):
                    botão dentro de item clicável faz o clique disparar os dois. -->
               <ion-item>
@@ -41,9 +51,11 @@
                 </ion-button>
               </ion-item>
             } @empty {
-              <ion-item>
-                <ion-label>Nenhum evento cadastrado.</ion-label>
-              </ion-item>
+              @if (!termoBusca.trim()) {
+                <ion-item>
+                  <ion-label>Nenhum evento cadastrado.</ion-label>
+                </ion-item>
+              }
             }
           </ion-list>
         }

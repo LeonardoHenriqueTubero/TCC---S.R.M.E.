@@ -38,7 +38,59 @@
             <app-aviso-pre-requisitos oQue="um lançamento" [faltando]="faltando" />
           }
 
-          @for (lancamento of lancamentos; track lancamento.id) {
+          <app-barra-busca
+            placeholder="Buscar evento, casa de oração ou músico"
+            substantivo="lançamento"
+            plural="lançamentos"
+            [termo]="termoBusca"
+            [total]="lancamentos.length"
+            [encontrados]="lancamentosFiltrados().length"
+            (termoMudou)="termoBusca = $event"
+          />
+
+          <!-- O recorte por data fica ao lado da busca por texto, e não dentro
+               dela: são perguntas diferentes ("o que teve em março" e "onde o
+               João tocou") e valem juntas. -->
+          <div class="periodo">
+            <ion-item>
+              <ion-input
+                label="De"
+                labelPlacement="stacked"
+                type="date"
+                [min]="dataMinima"
+                [max]="dataMaxima"
+                [value]="dataInicial"
+                (ionInput)="dataInicial = $any($event.target).value ?? ''"
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Até"
+                labelPlacement="stacked"
+                type="date"
+                [min]="dataMinima"
+                [max]="dataMaxima"
+                [value]="dataFinal"
+                (ionInput)="dataFinal = $any($event.target).value ?? ''"
+              ></ion-input>
+            </ion-item>
+
+            @if (filtrando()) {
+              <ion-button fill="clear" size="small" (click)="limparFiltros()">
+                <ion-icon slot="start" name="close-outline"></ion-icon>
+                Limpar
+              </ion-button>
+            }
+          </div>
+
+          @if (periodoInvertido) {
+            <ion-note color="danger" class="ion-padding erro-periodo">
+              A data final não pode ser anterior à data inicial.
+            </ion-note>
+          }
+
+          @for (lancamento of lancamentosFiltrados(); track lancamento.id) {
             <ion-card>
               <ion-card-header>
                 <ion-card-subtitle>{{ formatarData(lancamento.data) }}</ion-card-subtitle>
@@ -103,9 +155,13 @@
               </ion-card-content>
             </ion-card>
           } @empty {
-            <!-- Quando há pendências, quem explica o vazio é o aviso acima. -->
-            @if (faltando.length === 0) {
+            <!-- Quando há pendências, quem explica o vazio é o aviso acima; com
+                 filtro em uso, quem explica é a barra de busca ou o período. -->
+            @if (faltando.length === 0 && !filtrando()) {
               <p class="ion-padding">Nenhum lançamento cadastrado.</p>
+            }
+            @if (filtrando() && !termoBusca.trim()) {
+              <p class="ion-padding">Nenhum lançamento no período escolhido.</p>
             }
           }
         }

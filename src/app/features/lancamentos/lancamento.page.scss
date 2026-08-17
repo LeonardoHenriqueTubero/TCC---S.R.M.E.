@@ -103,3 +103,31 @@
 
   max-height: calc(var(--altura-linha) * 6.5 + 2px);
 }
+
+// O recorte por data: dois campos lado a lado, com o "Limpar" no fim da linha.
+// Envolve em vez de espremer, porque no celular estreito os dois campos de data
+// não cabem um ao lado do outro sem virar duas caixinhas ilegíveis.
+.periodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+// Os ion-item de dentro trazem a moldura de "campo solto" do global.scss, que
+// aqui vira a caixa de cada data; o que não serve é a margem de baixo dele,
+// somada ao gap acima.
+.periodo ion-item {
+  flex: 1 1 180px;
+  margin-bottom: 0;
+}
+
+// Mesmo motivo do aviso do formulário: é uma mensagem do filtro inteiro, não um
+// rótulo ao lado de um campo, e o ion-note vem em linha por padrão.
+.erro-periodo {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: -8px;
+  margin-bottom: 12px;
+}

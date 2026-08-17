@@ -22,12 +22,15 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
+  IonInput,
+  IonNote,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   addOutline,
   chevronDownOutline,
   chevronUpOutline,
+  closeOutline,
   createOutline,
   trashOutline,
 } from 'ionicons/icons';
@@ -39,14 +42,25 @@ import { BotaoTemaComponent } from '../../shared/components/botao-tema.component
 import { MenuBotaoComponent } from '../../shared/components/menu-botao.component';
 import { AvisoPreRequisitosComponent } from '../../shared/components/aviso-pre-requisitos.component';
 import { PreRequisito, PreRequisitosService } from '../../core/services/pre-requisitos.service';
+import { BarraBuscaComponent } from '../../shared/components/barra-busca.component';
+import { contemTermo } from '../../core/texto';
+import { dataMaxima, dataMinima } from '../../core/limites';
 
-addIcons({ addOutline, chevronDownOutline, chevronUpOutline, createOutline, trashOutline });
+addIcons({
+  addOutline,
+  chevronDownOutline,
+  chevronUpOutline,
+  closeOutline,
+  createOutline,
+  trashOutline,
+});
 
 @Component({
   selector: 'app-lancamento',
   templateUrl: './lancamento.page.html',
   styleUrls: ['./lancamento.page.scss'],
   imports: [
+    BarraBuscaComponent,
     AvisoPreRequisitosComponent,
     BotaoTemaComponent,
     MenuBotaoComponent,
@@ -72,6 +86,8 @@ addIcons({ addOutline, chevronDownOutline, chevronUpOutline, createOutline, tras
     IonIcon,
     IonButtons,
     IonButton,
+    IonInput,
+    IonNote,
   ],
 })
 export class LancamentoPage {
@@ -96,6 +112,17 @@ export class LancamentoPage {
   // fecharia sozinho no meio do uso.
   private readonly abertos = new Set<number>();
 
+  // Os três filtros da tela. O texto casa evento, casa de oração e nome de
+  // músico participante; o período recorta por data. São independentes: valem
+  // sozinhos ou combinados.
+  termoBusca = '';
+  dataInicial = '';
+  dataFinal = '';
+
+  // Limites do <input type="date">, os mesmos do resto do app.
+  protected readonly dataMinima = dataMinima();
+  protected readonly dataMaxima = dataMaxima();
+
   constructor() {
     // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
     // no banco (criar/editar/excluir, aqui ou em outra tela). Isso também cobre
@@ -114,6 +141,50 @@ export class LancamentoPage {
       this.preRequisitos.paraLancamento(),
     ]);
     this.carregando = false;
+  }
+
+  /**
+   * Os lançamentos que sobram depois dos filtros.
+   *
+   * A data guardada é 'YYYY-MM-DD', que é ordenável como texto: comparar
+   * string com string já dá o resultado certo, sem converter para Date.
+   *
+   * O texto casa também o nome dos músicos participantes, e não só evento e
+   * casa: "onde o João tocou" é uma das perguntas que esta tela recebe, e a
+   * resposta já está carregada em memória (a consulta traz os músicos junto).
+   */
+  lancamentosFiltrados(): LancamentoComMusicos[] {
+    return this.lancamentos.filter((lancamento) => {
+      if (this.dataInicial && lancamento.data < this.dataInicial) {
+        return false;
+      }
+      if (this.dataFinal && lancamento.data > this.dataFinal) {
+        return false;
+      }
+      return contemTermo(
+        this.termoBusca,
+        lancamento.nomeEvento,
+        lancamento.nomeCasaOracao,
+        ...lancamento.musicos.map((musico) => musico.nome)
+      );
+    });
+  }
+
+  /** Se há algum filtro em uso — o que decide mostrar o botão de limpar. */
+  filtrando(): boolean {
+    return this.termoBusca.trim() !== '' || this.dataInicial !== '' || this.dataFinal !== '';
+  }
+
+  // Data final antes da inicial não devolveria nada, e o usuário ficaria sem
+  // entender por que a lista sumiu. O aviso aparece antes de ele procurar.
+  get periodoInvertido(): boolean {
+    return this.dataInicial !== '' && this.dataFinal !== '' && this.dataInicial > this.dataFinal;
+  }
+
+  limparFiltros(): void {
+    this.termoBusca = '';
+    this.dataInicial = '';
+    this.dataFinal = '';
   }
 
   estaAberto(lancamentoId: number): boolean {
