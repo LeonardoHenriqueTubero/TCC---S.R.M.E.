@@ -15,7 +15,6 @@ import {
   IonInput,
   IonSelect,
   IonSelectOption,
-  IonSearchbar,
   IonList,
   IonListHeader,
   IonLabel,
@@ -32,6 +31,8 @@ import { Evento } from '../../core/models/evento.model';
 import { Musico } from '../../core/models/musico.model';
 import { SelecaoAdaptavelDirective } from '../../shared/directives/selecao-adaptavel.directive';
 import { FaltaPreencherComponent } from '../../shared/components/falta-preencher.component';
+import { BarraBuscaComponent } from '../../shared/components/barra-busca.component';
+import { contemTermo } from '../../core/texto';
 import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '../../core/limites';
 
 @Component({
@@ -39,6 +40,7 @@ import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '.
   templateUrl: './lancamento-form.page.html',
   styleUrls: ['./lancamento-form.page.scss'],
   imports: [
+    BarraBuscaComponent,
     FaltaPreencherComponent,
     SelecaoAdaptavelDirective,
     ReactiveFormsModule,
@@ -55,7 +57,6 @@ import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '.
     IonInput,
     IonSelect,
     IonSelectOption,
-    IonSearchbar,
     IonList,
     IonListHeader,
     IonLabel,
@@ -128,13 +129,18 @@ export class LancamentoFormPage implements OnInit {
     }
   }
 
-  // Filtra a lista de músicos pelo texto da busca (ignora maiúsculas/acentos simples).
+  /**
+   * Filtra a relação pelo texto da busca.
+   *
+   * Quem procura o João digita "joao", e a comparação daqui antes era um
+   * toLowerCase() cru — que não encontrava nada. O contemTermo é o mesmo das
+   * cinco listagens, e tira os acentos dos dois lados (ver core/texto.ts).
+   *
+   * Só o nome entra na busca porque só o nome aparece aqui: o listarTodos()
+   * desta tela não traz instrumento nem casa de oração.
+   */
   musicosFiltrados(): Musico[] {
-    const termo = this.termoBusca.trim().toLowerCase();
-    if (!termo) {
-      return this.musicos;
-    }
-    return this.musicos.filter((m) => m.nome.toLowerCase().includes(termo));
+    return this.musicos.filter((musico) => contemTermo(this.termoBusca, musico.nome));
   }
 
   estaSelecionado(id: number | undefined): boolean {

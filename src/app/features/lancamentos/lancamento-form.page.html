@@ -60,11 +60,17 @@
               </ion-label>
             </ion-list-header>
 
-            <ion-searchbar
+            <!-- A mesma barra das listagens: mesmo atraso de digitação, mesmo
+                 botão de limpar e a mesma contagem do que sobrou. -->
+            <app-barra-busca
               placeholder="Buscar músico"
-              [debounce]="150"
-              (ionInput)="termoBusca = $any($event.target).value"
-            ></ion-searchbar>
+              substantivo="músico"
+              plural="músicos"
+              [termo]="termoBusca"
+              [total]="musicos.length"
+              [encontrados]="musicosFiltrados().length"
+              (termoMudou)="termoBusca = $event"
+            />
 
             <!-- Só os nomes rolam: o cabeçalho e a busca ficam parados acima.
                  Sem esta caixa, cada músico cadastrado esticava o formulário e
@@ -80,9 +86,13 @@
                   </ion-checkbox>
                 </ion-item>
               } @empty {
-                <ion-item>
-                  <ion-label>Nenhum músico encontrado.</ion-label>
-                </ion-item>
+                <!-- Com busca em andamento quem explica o vazio é a contagem da
+                     barra ("Nenhum resultado para ..."), logo acima. -->
+                @if (!termoBusca.trim()) {
+                  <ion-item>
+                    <ion-label>Nenhum músico encontrado.</ion-label>
+                  </ion-item>
+                }
               }
             </div>
           </ion-list>
