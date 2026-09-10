@@ -5,8 +5,6 @@
   margin-top: 0.5rem;
 }
 
-// Quantos músicos participaram, com o botão que abre a relação logo ao lado —
-// é o que o card mostra enquanto ela está fechada.
 .resumo-musicos {
   display: flex;
   align-items: center;
@@ -19,33 +17,18 @@
   color: var(--srme-texto-suave);
 }
 
-// A relação aberta rola dentro da própria caixa, em vez de esticar o card: com
-// trinta ou mais nomes, um único lançamento tomaria a tela inteira e os
-// seguintes ficariam a metros de distância. Mesma solução do formulário de
-// lançamento (ver lancamento-form.page.scss).
-//
-// A altura é dada em múltiplos da linha e sempre termina em meia linha: é assim
-// que se vê, sem precisar de aviso, que a relação continua abaixo.
 .rol-musicos {
   --altura-linha: 56px;
 
-  // Os 2px são a borda da própria caixa: com box-sizing: border-box ela sai de
-  // dentro da altura, e sem somá-los de volta a última linha visível apareceria
-  // um pouco mais cortada do que a metade pedida acima.
   max-height: calc(var(--altura-linha) * 5.5 + 2px);
   overflow-y: auto;
   margin-block: 4px;
   border: 1px solid var(--srme-borda-cor);
   border-radius: var(--srme-raio-pequeno);
 
-  // Sem isto, ao chegar ao fim da relação o gesto de rolagem "vaza" e passa a
-  // rolar a lista de lançamentos atrás, o que confunde no celular.
   overscroll-behavior: contain;
 }
 
-// Quem desenha a moldura é a caixa acima; a lista dentro dela é só as linhas.
-// (O global.scss dá a toda ion-list borda, arredondamento e sombra próprios,
-// que aqui virariam uma segunda caixa dentro da primeira.)
 .rol-musicos ion-list {
   border: 0;
   border-radius: 0;
@@ -53,24 +36,6 @@
   margin-bottom: 0;
 }
 
-// As medidas da linha são escritas aqui, e não herdadas, porque é delas que sai
-// a conta da altura da caixa. Duas armadilhas, as duas medidas no app rodando:
-//
-// 1. O --min-height é um piso, não uma altura: quem manda é o conteúdo sempre
-//    que ele passar do piso. Era o caso — linha de 51px onde a conta supunha 48,
-//    e o corte, que devia cair no meio de uma linha, caindo quase no começo
-//    dela. Por isso a entrelinha e as margens do rótulo também vêm daqui: com
-//    elas, o texto ocupa 42,5px e cabe com folga sob o piso. A folga não
-//    aparece, porque o ion-item centraliza o que tem dentro.
-//
-// 2. O traço que separa uma linha da outra fica FORA do --min-height, então cada
-//    linha media um pixel a mais do que a conta supunha — e era essa sobra,
-//    multiplicada por seis linhas, que empurrava o corte para longe da metade.
-//    Daí o -1px.
-//
-// Um nome comprido demais para a largura da tela quebra em duas linhas e estica
-// a linha dele — aí a caixa corta onde calhar. É o único caso, e não vale um
-// truncamento por ele: melhor ver o nome inteiro.
 .rol-musicos ion-item {
   --min-height: calc(var(--altura-linha) - 1px);
 }
@@ -89,24 +54,16 @@
   line-height: 1.25;
 }
 
-// A última linha encostaria o próprio traço na borda da caixa, desenhando duas
-// linhas quase juntas quando a relação está rolada até o fim.
 .rol-musicos ion-item:last-of-type {
   --border-width: 0;
 }
 
-// No computador as linhas são mais baixas — como nas outras listagens — então
-// cabe mais gente na mesma caixa. A classe no <html> vem do FormatoService, e
-// não da largura da janela (ver global.scss).
 :host-context(html.srme-desktop) .rol-musicos {
   --altura-linha: 48px;
 
   max-height: calc(var(--altura-linha) * 6.5 + 2px);
 }
 
-// O recorte por data: dois campos lado a lado, com o "Limpar" no fim da linha.
-// Envolve em vez de espremer, porque no celular estreito os dois campos de data
-// não cabem um ao lado do outro sem virar duas caixinhas ilegíveis.
 .periodo {
   display: flex;
   flex-wrap: wrap;
@@ -115,16 +72,11 @@
   margin-bottom: 16px;
 }
 
-// Os ion-item de dentro trazem a moldura de "campo solto" do global.scss, que
-// aqui vira a caixa de cada data; o que não serve é a margem de baixo dele,
-// somada ao gap acima.
 .periodo ion-item {
   flex: 1 1 180px;
   margin-bottom: 0;
 }
 
-// Mesmo motivo do aviso do formulário: é uma mensagem do filtro inteiro, não um
-// rótulo ao lado de um campo, e o ion-note vem em linha por padrão.
 .erro-periodo {
   display: block;
   font-size: 0.85rem;

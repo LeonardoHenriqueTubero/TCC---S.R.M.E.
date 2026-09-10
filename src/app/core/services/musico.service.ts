@@ -8,7 +8,6 @@ import { Musico, MusicoListado } from '../models/musico.model';
 export class MusicoService {
   private dbService = inject(Database);
 
-  // Só traz os ativos: excluir() apenas marca ativo = 0 (exclusão lógica).
   async listarTodos(): Promise<Musico[]> {
     const resultado = await this.dbService
       .getConexao()
@@ -16,15 +15,6 @@ export class MusicoService {
     return (resultado.values ?? []) as Musico[];
   }
 
-  // Mesma lista, com o instrumento e a casa de oração já pelo nome — a tela de
-  // listagem mostra essas colunas e não teria como resolver os ids sozinha.
-  //
-  // É um método separado de propósito: as outras telas que chamam listarTodos()
-  // (os músicos do lançamento e o filtro dos relatórios) usam só id e nome, e
-  // não têm por que pagar dois JOINs nem mudar de tipo.
-  //
-  // LEFT JOIN nos dois: o músico pode não ter instrumento ou casa, e o cadastro
-  // de um deles pode ter sido excluído depois de vinculado.
   async listarComNomes(): Promise<MusicoListado[]> {
     const resultado = await this.dbService.getConexao().query(`
       SELECT m.*, i.nome AS instrumentoNome, c.nome AS casaNome
@@ -44,7 +34,6 @@ export class MusicoService {
     return resultado.values?.[0];
   }
 
-  // Omit de id (autoincremento) e ativo (todo músico novo nasce ativo).
   async criar(musico: Omit<Musico, 'id' | 'ativo'>): Promise<void> {
     await this.dbService
       .getConexao()
@@ -80,8 +69,6 @@ export class MusicoService {
     await this.dbService.persistir();
   }
 
-  // Exclusão lógica: o registro continua no banco (lançamentos antigos seguem
-  // apontando para ele), mas some das listagens.
   async excluir(id: number): Promise<void> {
     await this.dbService.getConexao().run('UPDATE musico SET ativo = 0 WHERE id = ?', [id]);
     await this.dbService.persistir();

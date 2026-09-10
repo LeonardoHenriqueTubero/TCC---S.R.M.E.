@@ -52,7 +52,6 @@ import { TAMANHO_MAXIMO } from '../../../core/limites';
 })
 export class MusicoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
-  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
   protected readonly ROTULOS = {
     nome: 'Nome',
     cargo: 'Cargo',
@@ -69,37 +68,27 @@ export class MusicoFormPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  // Opções dos dropdowns — carregadas do banco, só o que já está cadastrado.
   casas: CasaOracao[] = [];
   instrumentos: Instrumento[] = [];
 
-  // As duas únicas respostas de "Oficializado" e "Batizado".
   readonly SIM_OU_NAO = ['Sim', 'Não'] as const;
 
   modoEdicao = false;
   private musicoId?: number;
 
-  // Não há campo "ativo" aqui: todo músico novo nasce ativo, e a exclusão
-  // (que marca ativo = 0) é feita pela lista, não por este formulário.
   form = this.formBuilder.nonNullable.group({
     nome: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.nome)]],
     oficializado: ['', Validators.required],
     batizado: ['', Validators.required],
     cargo: ['', [Validators.required, Validators.maxLength(TAMANHO_MAXIMO.cargo)]],
-    // Começam em 0 (nenhuma opção tem id 0), então o Validators.min(1) mantém
-    // o formulário inválido até o usuário escolher uma casa/instrumento reais
-    // nos <ion-select>. O valor guardado é o id da casa/instrumento.
     comum_congregacao: [0, [Validators.required, Validators.min(1)]],
     instrumento: [0, [Validators.required, Validators.min(1)]],
   });
 
   async ngOnInit(): Promise<void> {
-    // Carrega as opções dos dropdowns — apenas o que já está cadastrado no banco.
     this.casas = await this.casaOracaoService.listarTodos();
     this.instrumentos = await this.instrumentoService.listarTodos();
 
-    // A mesma página atende /musicos/novo e /musicos/:id/editar. Com o
-    // parâmetro :id, buscamos o registro e preenchemos o formulário.
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       return;
@@ -110,8 +99,6 @@ export class MusicoFormPage implements OnInit {
 
     const musico = await this.musicoService.buscarPorId(this.musicoId);
     if (musico) {
-      // patchValue aceita objeto parcial, então dá para passar o Musico inteiro
-      // mesmo ele tendo campos (id, ativo) que o formulário não possui.
       this.form.patchValue({
         ...musico,
         oficializado: this.simOuNao(musico.oficializado),
@@ -120,13 +107,6 @@ export class MusicoFormPage implements OnInit {
     }
   }
 
-  /**
-   * Os dois campos eram de texto livre, então um registro antigo pode trazer
-   * "sim", "NÃO", "s"... — e o <ion-select> não mostra um valor que não seja
-   * exatamente uma das suas opções. Aqui a resposta antiga é reconhecida pela
-   * primeira letra; o que não for nem sim nem não abre em branco, para o
-   * usuário escolher.
-   */
   private simOuNao(valor: string): string {
     const inicial = valor?.trim().charAt(0).toLowerCase();
     if (inicial === 's') {

@@ -19,8 +19,6 @@
           </ion-list-header>
 
           @for (opcao of opcoes; track opcao.id) {
-            <!-- O item inteiro é clicável e o ícone da direita é só decorativo,
-                 então não há botão dentro de área clicável. -->
             <ion-item button [disabled]="gerando !== null" (click)="escolher(opcao)">
               <ion-icon slot="start" [name]="opcao.icone" color="primary"></ion-icon>
               <ion-label class="ion-text-wrap">
@@ -40,8 +38,6 @@
     </ion-row>
   </ion-grid>
 
-  <!-- O relatório pronto, antes de virar arquivo. Só aparece no computador; no
-       celular o compartilhar do sistema já entrega o PDF (ver o `gerar`). -->
   <ion-modal
     class="modal-visualizacao"
     [isOpen]="emVisualizacao !== null"
@@ -59,8 +55,6 @@
     </ng-template>
   </ion-modal>
 
-  <!-- Um modal só para os dois relatórios com filtro: os campos exibidos vêm
-       da lista `campos` da opção escolhida. -->
   <ion-modal [isOpen]="emFiltro !== null" (didDismiss)="fecharFiltro()">
     <ng-template>
       <ion-header>
@@ -142,8 +136,6 @@
                 labelPlacement="stacked"
                 placeholder="Selecione a casa de oração"
               >
-                <!-- No filtro opcional o 0 já vem marcado; no obrigatório o
-                     select abre vazio e "Todas" precisa ser escolhido. -->
                 <ion-select-option [value]="0">Todas as casas</ion-select-option>
                 @for (casa of casas; track casa.id) {
                   <ion-select-option [value]="casa.id">

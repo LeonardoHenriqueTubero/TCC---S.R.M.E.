@@ -14,8 +14,6 @@
 
         <form [formGroup]="form" (ngSubmit)="salvar()">
           <ion-item>
-            <!-- min/max fecham o calendario no intervalo; quem barra a data digitada
-                 e o validador no componente. -->
             <ion-input formControlName="data" label="Data" labelPlacement="stacked" type="date"
               [min]="dataMinima" [max]="dataMaxima"></ion-input>
           </ion-item>
@@ -60,8 +58,6 @@
               </ion-label>
             </ion-list-header>
 
-            <!-- A mesma barra das listagens: mesmo atraso de digitação, mesmo
-                 botão de limpar e a mesma contagem do que sobrou. -->
             <app-barra-busca
               placeholder="Buscar músico"
               substantivo="músico"
@@ -72,9 +68,6 @@
               (termoMudou)="termoBusca = $event"
             />
 
-            <!-- Só os nomes rolam: o cabeçalho e a busca ficam parados acima.
-                 Sem esta caixa, cada músico cadastrado esticava o formulário e
-                 o botão Salvar ia parar cada vez mais longe. -->
             <div class="rol-musicos">
               @for (musico of musicosFiltrados(); track musico.id) {
                 <ion-item>
@@ -86,8 +79,6 @@
                   </ion-checkbox>
                 </ion-item>
               } @empty {
-                <!-- Com busca em andamento quem explica o vazio é a contagem da
-                     barra ("Nenhum resultado para ..."), logo acima. -->
                 @if (!termoBusca.trim()) {
                   <ion-item>
                     <ion-label>Nenhum músico encontrado.</ion-label>

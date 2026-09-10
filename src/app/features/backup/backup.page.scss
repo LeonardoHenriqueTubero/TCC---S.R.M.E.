@@ -1,9 +1,3 @@
-// Backup dos dados
-// ---------------------------------------------------------------------------
-// Os mesmos cartões do painel. As quatro regras de moldura interna estão
-// repetidas de lá de propósito: são poucas linhas e cada tela fica dona do seu
-// espaçamento — a moldura em si (borda, raio, fundo) já vem do .srme-cartao no
-// global.scss.
 .cartao {
   display: block;
   padding: 18px 20px;
@@ -31,9 +25,6 @@
   color: var(--srme-texto-suave);
 }
 
-// O alerta de que a importação apaga tudo. Fundo âmbar em vez de vermelho: o
-// vermelho é do que já deu errado, e aqui nada deu — é um aviso do que a ação
-// vai fazer.
 .aviso {
   display: flex;
   align-items: flex-start;
@@ -54,7 +45,6 @@
   color: var(--ion-color-warning-shade);
 }
 
-// A resposta da última ação, logo abaixo dos dois cartões.
 .recado {
   display: flex;
   align-items: flex-start;
@@ -76,8 +66,6 @@
   font-size: 18px;
 }
 
-// No celular os botões ocupam a largura toda, como o resto do app; no
-// computador ficam do tamanho do texto.
 :host-context(html.srme-celular) .cartao ion-button {
   display: block;
 }

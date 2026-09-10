@@ -2,9 +2,6 @@
   <ion-toolbar>
     <app-menu-botao slot="start"></app-menu-botao>
     <ion-title>Eventos</ion-title>
-    <!-- No computador a ação principal fica na barra de título, como em
-         qualquer programa de desktop; no celular ela continua sendo o botão
-         flutuante, que o CSS troca conforme a largura da tela. -->
     <ion-buttons slot="end">
       <app-botao-tema></app-botao-tema>
     </ion-buttons>
@@ -39,8 +36,6 @@
 
           <ion-list>
             @for (evento of eventosFiltrados(); track evento.id) {
-              <!-- Os botões ficam soltos no item (o item em si não é clicável):
-                   botão dentro de item clicável faz o clique disparar os dois. -->
               <ion-item>
                 <ion-label>{{ evento.nome }}</ion-label>
                 <ion-button slot="end" fill="clear" [routerLink]="['/eventos', evento.id, 'editar']">

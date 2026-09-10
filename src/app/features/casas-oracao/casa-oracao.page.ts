@@ -70,10 +70,6 @@ export class CasaOracaoPage {
   termoBusca = '';
 
   constructor() {
-    // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
-    // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
-    // ficaria desatualizada até recarregar a página, porque o Ionic mantém as
-    // páginas de aba vivas e o ionViewWillEnter não dispara de novo.
     effect(() => {
       this.database.versaoDados();
       this.carregar();
@@ -86,15 +82,10 @@ export class CasaOracaoPage {
     this.carregando = false;
   }
 
-  // A cidade entra na busca junto com o nome: é comum haver casas de mesmo nome
-  // em cidades diferentes, e é a cidade que as separa.
   casasFiltradas(): CasaOracao[] {
     return this.casas.filter((casa) => contemTermo(this.termoBusca, casa.nome, casa.cidade));
   }
 
-  // Bloqueia a exclusão se a casa ainda estiver em uso; caso contrário pergunta
-  // antes de excluir. A exclusão é lógica (marca ativo = 0), então o registro
-  // apenas some da lista.
   async excluir(casa: CasaOracao): Promise<void> {
     if (casa.id === undefined) {
       return;

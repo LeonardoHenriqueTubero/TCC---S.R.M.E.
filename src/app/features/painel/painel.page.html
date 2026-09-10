@@ -18,8 +18,6 @@
             <ion-spinner></ion-spinner>
           </div>
         } @else if (resumo && vazio) {
-          <!-- Cadastro ainda vazio: um painel de zeros não informa nada, então
-               no lugar dele vai o primeiro passo. -->
           <div class="srme-cartao srme-vazio">
             <ion-icon name="sparkles-outline"></ion-icon>
             <h2>Bem-vindo ao S.R.M.E.</h2>
@@ -38,7 +36,6 @@
           </div>
         } @else if (resumo) {
 
-          <!-- Os cinco números do cadastro. Cada um leva à sua aba. -->
           <div class="numeros">
             @for (n of numeros(); track n.rotulo) {
               <a class="srme-cartao numero" [routerLink]="n.rota">
@@ -50,8 +47,6 @@
           </div>
 
           <div class="graficos">
-            <!-- Uma série só, então sem legenda: o título já diz o que está
-                 medido, e cada barra traz o seu número na ponta. -->
             <section class="srme-cartao cartao">
               <h2>Composição da orquestra</h2>
               <p class="apoio">Músicos por família de instrumentos</p>

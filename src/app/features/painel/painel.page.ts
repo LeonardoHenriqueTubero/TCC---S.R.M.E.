@@ -65,9 +65,6 @@ export class PainelPage {
   carregando = true;
 
   constructor() {
-    // Recarrega sozinho a cada gravação no banco, como as listagens: o painel
-    // é a primeira aba e ficaria desatualizado logo depois do primeiro
-    // cadastro, já que o Ionic mantém as páginas de aba vivas.
     effect(() => {
       this.database.versaoDados();
       this.carregar();
@@ -80,7 +77,6 @@ export class PainelPage {
     this.carregando = false;
   }
 
-  /** Nada cadastrado ainda — nem sequer uma casa de oração. */
   get vazio(): boolean {
     const r = this.resumo;
     return (
@@ -120,16 +116,10 @@ export class PainelPage {
     return Math.max(...(this.resumo?.porCasa ?? []).map((c) => c.total), 1);
   }
 
-  /**
-   * A largura da barra, em porcentagem da maior. Um piso de 2% para o valor
-   * zero não existir como barra invisível: a casa sem músicos precisa mostrar
-   * que está ali, e o número ao lado diz que é zero.
-   */
   largura(valor: number, maior: number): number {
     return valor === 0 ? 2 : Math.max((valor / maior) * 100, 6);
   }
 
-  /** 'YYYY-MM-DD' vira 'DD/MM'. O ano fica de fora: são os cinco últimos. */
   formatarData(data: string): string {
     const [, mes, dia] = data.split('-');
     return `${dia}/${mes}`;

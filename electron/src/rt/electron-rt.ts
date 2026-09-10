@@ -2,7 +2,6 @@ import { randomBytes } from 'crypto';
 import { ipcRenderer, contextBridge } from 'electron';
 import { EventEmitter } from 'events';
 
-////////////////////////////////////////////////////////
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const plugins = require('./electron-plugins');
 
@@ -30,7 +29,6 @@ Object.keys(plugins).forEach((pluginKey) => {
         }
       });
 
-      // Events
       if (plugins[pluginKey][classKey].prototype instanceof EventEmitter) {
         const listeners: { [key: string]: { type: string; listener: (...args: any[]) => void } } = {};
         const listenersOfTypeExist = (type) =>
@@ -40,7 +38,6 @@ Object.keys(plugins).forEach((pluginKey) => {
           addListener(type: string, callback: (...args) => void) {
             const id = randomId();
 
-            // Deduplicate events
             if (!listenersOfTypeExist(type)) {
               ipcRenderer.send(`event-add-${classKey}`, type);
             }
@@ -85,4 +82,3 @@ contextBridge.exposeInMainWorld('CapacitorCustomPlatform', {
   name: 'electron',
   plugins: contextApi,
 });
-////////////////////////////////////////////////////////

@@ -66,15 +66,11 @@ import { comoBrasileiro, dataDentroDoIntervalo, dataMaxima, dataMinima } from '.
   ],
 })
 export class LancamentoFormPage implements OnInit {
-  // Calculadas uma vez, na abertura da tela: o formulário não fica aberto
-  // tempo suficiente para a virada do dia importar.
   protected readonly dataMinima = dataMinima();
   protected readonly dataMaxima = dataMaxima();
-  // Só para a mensagem de erro: ninguém lê 2016-08-06 de primeira.
   protected readonly intervaloDeDatas =
     `${comoBrasileiro(dataMinima())} e ${comoBrasileiro(dataMaxima())}`;
 
-  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
   protected readonly ROTULOS = {
     data: 'Data',
     local: 'Casa de oração',
@@ -93,7 +89,6 @@ export class LancamentoFormPage implements OnInit {
   eventos: Evento[] = [];
   musicos: Musico[] = [];
 
-  // Texto digitado na busca e ids dos músicos marcados para este lançamento.
   termoBusca = '';
   musicosSelecionados: number[] = [];
 
@@ -102,7 +97,6 @@ export class LancamentoFormPage implements OnInit {
 
   form = this.formBuilder.nonNullable.group({
     data: ['', [Validators.required, dataDentroDoIntervalo()]],
-    // 0 = nada escolhido; min(1) segura o formulário até selecionar de verdade.
     local: [0, [Validators.required, Validators.min(1)]],
     evento: [0, [Validators.required, Validators.min(1)]],
   });
@@ -112,7 +106,6 @@ export class LancamentoFormPage implements OnInit {
     this.eventos = await this.eventoService.listarTodos();
     this.musicos = await this.musicoService.listarTodos();
 
-    // A mesma página atende /lancamentos/novo e /lancamentos/:id/editar.
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       return;
@@ -124,21 +117,10 @@ export class LancamentoFormPage implements OnInit {
     const lancamento = await this.lancamentoService.buscarPorId(this.lancamentoId);
     if (lancamento) {
       this.form.patchValue(lancamento);
-      // Remarca os checkboxes dos músicos que já estavam no lançamento.
       this.musicosSelecionados = await this.lancamentoService.listarMusicoIds(this.lancamentoId);
     }
   }
 
-  /**
-   * Filtra a relação pelo texto da busca.
-   *
-   * Quem procura o João digita "joao", e a comparação daqui antes era um
-   * toLowerCase() cru — que não encontrava nada. O contemTermo é o mesmo das
-   * cinco listagens, e tira os acentos dos dois lados (ver core/texto.ts).
-   *
-   * Só o nome entra na busca porque só o nome aparece aqui: o listarTodos()
-   * desta tela não traz instrumento nem casa de oração.
-   */
   musicosFiltrados(): Musico[] {
     return this.musicos.filter((musico) => contemTermo(this.termoBusca, musico.nome));
   }
@@ -147,7 +129,6 @@ export class LancamentoFormPage implements OnInit {
     return id !== undefined && this.musicosSelecionados.includes(id);
   }
 
-  // Marca/desmarca um músico na lista de participantes do lançamento.
   alternarMusico(id: number | undefined): void {
     if (id === undefined) {
       return;
@@ -159,15 +140,11 @@ export class LancamentoFormPage implements OnInit {
     }
   }
 
-  // A escolha dos músicos não é um campo do FormGroup, então a pendência dela
-  // não sai do formulário: entra na mensagem por fora (ver o `extras` do
-  // FaltaPreencherComponent).
   protected pendenciasExtras(): string[] {
     return this.musicosSelecionados.length === 0 ? ['pelo menos um músico'] : [];
   }
 
   async salvar(): Promise<void> {
-    // Precisa de formulário válido e pelo menos um músico selecionado.
     if (this.form.invalid || this.musicosSelecionados.length === 0) {
       return;
     }

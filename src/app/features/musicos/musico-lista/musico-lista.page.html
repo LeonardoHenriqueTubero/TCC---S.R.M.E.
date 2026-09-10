@@ -2,14 +2,9 @@
   <ion-toolbar>
     <app-menu-botao slot="start"></app-menu-botao>
     <ion-title>Músicos</ion-title>
-    <!-- No computador a ação principal fica na barra de título, como em
-         qualquer programa de desktop; no celular ela continua sendo o botão
-         flutuante, que o CSS troca conforme a largura da tela. -->
     <ion-buttons slot="end">
       <app-botao-tema></app-botao-tema>
     </ion-buttons>
-    <!-- Desabilitado enquanto faltar casa de oração ou instrumento: sem eles o
-         formulário abre com os dois selects vazios e não há como salvar. -->
     <ion-buttons slot="end" class="acao-da-tela">
       <ion-button
         fill="solid"
@@ -38,9 +33,6 @@
             <app-aviso-pre-requisitos oQue="um músico" [faltando]="faltando" />
           }
 
-          <!-- Com pendências e nenhum músico não há tabela nenhuma a mostrar:
-               quem explica o vazio é o aviso acima, e um cabeçalho de colunas
-               sobre uma lista vazia só faria confusão. -->
           @if (musicos.length > 0 || faltando.length === 0) {
           <app-barra-busca
             placeholder="Buscar por nome, instrumento, casa ou cargo"
@@ -52,9 +44,6 @@
             (termoMudou)="termoBusca = $event"
           />
 
-          <!-- Cabeçalho das colunas: existe só no computador, onde a lista tem
-               largura para virar tabela. No celular ele fica escondido e a
-               linha continua sendo nome e cargo, um sobre o outro. -->
           <div class="cabecalho-tabela">
             <span class="coluna-principal">Nome</span>
             <span class="coluna">Instrumento</span>
@@ -63,8 +52,6 @@
 
           <ion-list>
             @for (musico of musicosFiltrados(); track musico.id) {
-              <!-- Os botões ficam soltos no item (o item em si não é clicável):
-                   botão dentro de item clicável faz o clique disparar os dois. -->
               <ion-item>
                 <ion-label>
                   <h2>{{ musico.nome }}</h2>
@@ -82,9 +69,6 @@
                 </ion-button>
               </ion-item>
             } @empty {
-              <!-- Com busca em andamento quem explica o vazio é a barra
-                   ("Nenhum resultado para..."), então aqui só sobra o caso de
-                   não haver nada cadastrado. -->
               @if (!termoBusca.trim()) {
                 <ion-item>
                   <ion-label>Nenhum músico cadastrado ainda.</ion-label>

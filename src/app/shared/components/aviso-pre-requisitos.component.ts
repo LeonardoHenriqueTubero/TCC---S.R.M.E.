@@ -8,13 +8,6 @@ import { listaEmPortugues } from '../../core/texto';
 
 addIcons({ informationCircleOutline });
 
-/**
- * Diz o que falta cadastrar antes, no lugar do "nada aqui ainda".
- *
- * A tela de músicos e a de lançamentos dependem de outras telas terem sido
- * preenchidas primeiro, e isso não era óbvio para quem abria o app pela
- * primeira vez. Além do texto, cada pendência vira um atalho para a aba certa.
- */
 @Component({
   selector: 'app-aviso-pre-requisitos',
   imports: [RouterLink, IonButton, IonIcon],
@@ -40,11 +33,9 @@ addIcons({ informationCircleOutline });
   `,
 })
 export class AvisoPreRequisitosComponent {
-  /** O que o usuário está tentando cadastrar: "um músico", "um lançamento". */
   readonly oQue = input.required<string>();
   readonly faltando = input.required<PreRequisito[]>();
 
-  /** "uma casa de oração e um instrumento" — vírgulas no meio, "e" no fim. */
   protected readonly pendencias = computed(() =>
     listaEmPortugues(this.faltando().map((item) => `${item.artigo} ${item.nome}`))
   );

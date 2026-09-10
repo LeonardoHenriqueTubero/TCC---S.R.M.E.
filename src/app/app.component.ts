@@ -42,6 +42,5 @@ addIcons({ saveOutline });
   ],
 })
 export class AppComponent {
-  /** No computador o menu lateral não é usado: a barra lateral já está à vista. */
   protected readonly ehDesktop = inject(FormatoService).ehDesktop;
 }

@@ -8,7 +8,6 @@ import { CasaOracao } from '../models/casa-oracao.model';
 export class CasaOracaoService {
   private dbService = inject(Database);
 
-  // Só traz os ativos: excluir() apenas marca ativo = 0 (exclusão lógica).
   async listarTodos(): Promise<CasaOracao[]> {
     const resultado = await this.dbService
       .getConexao()
@@ -23,7 +22,6 @@ export class CasaOracaoService {
     return resultado.values?.[0];
   }
 
-  // Omit de id (autoincremento) e ativo (nasce 1 pelo DEFAULT da tabela).
   async criar(casa: Omit<CasaOracao, 'id' | 'ativo'>): Promise<void> {
     await this.dbService
       .getConexao()
@@ -38,9 +36,6 @@ export class CasaOracaoService {
     await this.dbService.persistir();
   }
 
-  // Descreve quem ainda usa esta casa de oração, ou null se ninguém usa.
-  // Serve para bloquear a exclusão e explicar o motivo ao usuário.
-  // Conta apenas registros ativos: um músico já excluído não impede nada.
   async descreverUsos(id: number): Promise<string | null> {
     const conexao = this.dbService.getConexao();
 
@@ -67,8 +62,6 @@ export class CasaOracaoService {
     return partes.length > 0 ? partes.join(' e ') : null;
   }
 
-  // Exclusão lógica: o registro continua no banco (lançamentos e músicos antigos
-  // seguem apontando para ele), mas some das listagens.
   async excluir(id: number): Promise<void> {
     await this.dbService.getConexao().run('UPDATE casaOracao SET ativo = 0 WHERE id = ?', [id]);
     await this.dbService.persistir();

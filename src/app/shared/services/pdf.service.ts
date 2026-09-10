@@ -5,19 +5,15 @@ import { Share } from '@capacitor/share';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-/** Uma tabela do relatório. O título é opcional: use quando o relatório for
- *  dividido em grupos (por exemplo, uma tabela para cada família de instrumento). */
 export interface SecaoRelatorio {
   titulo?: string;
   colunas: string[];
   linhas: (string | number)[][];
 }
 
-/** Tudo que uma tela precisa informar para virar PDF. */
 export interface Relatorio {
   titulo: string;
   subtitulo?: string;
-  /** Nome do arquivo, sem a extensão .pdf. */
   nomeArquivo: string;
   secoes: SecaoRelatorio[];
 }
@@ -25,9 +21,7 @@ export interface Relatorio {
 const MARCA = 'S.R.M.E.';
 
 const MARGEM = 14;
-/** Onde o conteúdo recomeça nas páginas seguintes, abaixo da tarja de topo. */
 const TOPO_CONTINUACAO = 26;
-/** Faixa reservada ao rodapé, para nenhuma tabela encostar nele. */
 const RODAPE = 18;
 
 const ALTURA_TARJA = 28;
@@ -35,9 +29,6 @@ const ALTURA_TARJA = 28;
 const FONTE_TABELA = 9;
 const PREENCHIMENTO_CELULA = 2.2;
 
-// A paleta é a mesma do app (theme/variables.scss), para o relatório impresso
-// não parecer de outro sistema: o azul das barras, o dourado dos destaques e os
-// neutros do texto.
 const AZUL: [number, number, number] = [30, 90, 142];
 const DOURADO: [number, number, number] = [200, 138, 46];
 const GRAFITE: [number, number, number] = [28, 37, 48];
@@ -46,35 +37,12 @@ const AZUL_CLARO: [number, number, number] = [186, 205, 222];
 const LINHA: [number, number, number] = [214, 223, 232];
 const FUNDO_ALTERNADO: [number, number, number] = [240, 244, 249];
 
-/**
- * Converte os dados de uma tela em PDF.
- *
- * As telas montam apenas o conteúdo (título e tabelas) e chamam `gerar()`; a
- * montagem do documento, o cabeçalho, o rodapé e a entrega do arquivo ficam
- * todos aqui, para os quatro relatórios saírem com a mesma cara.
- *
- * Uso típico:
- *   await this.pdf.gerar({
- *     titulo: 'Relatório de Músicos',
- *     nomeArquivo: 'relatorio-musicos',
- *     secoes: [{ colunas: ['Nome', 'Instrumento'], linhas: [['João', 'Violino']] }],
- *   });
- */
 @Injectable({
   providedIn: 'root',
 })
 export class PdfService {
   private readonly plataforma = Capacitor.getPlatform();
 
-  /**
-   * Se esta plataforma mostra o relatório na tela antes de entregar o arquivo.
-   *
-   * Anda junto com o `entregar()` lá embaixo: onde a entrega é um download
-   * (computador), a pré-visualização faz sentido e é de onde se manda imprimir;
-   * onde a entrega é o compartilhar do sistema (celular), o próprio aplicativo
-   * que recebe o PDF já o mostra e oferece imprimir, então uma tela nossa no
-   * meio do caminho só atrasaria.
-   */
   get temPreVisualizacao(): boolean {
     return this.plataforma === 'web' || this.plataforma === 'electron';
   }
@@ -92,8 +60,6 @@ export class PdfService {
     await this.entregar(doc, `${relatorio.nomeArquivo}.pdf`);
   }
 
-  // A tarja de abertura: azul de ponta a ponta com a marca e o título, fechada
-  // por um fio dourado. Devolve o Y onde a primeira tabela começa.
   private desenharCabecalho(doc: jsPDF, relatorio: Relatorio): number {
     const largura = doc.internal.pageSize.getWidth();
 
@@ -103,7 +69,6 @@ export class PdfService {
     doc.setFillColor(...DOURADO);
     doc.rect(0, ALTURA_TARJA, largura, 1.2, 'F');
 
-    // A marca vai espaçada, como um letreiro, para não competir com o título.
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(...AZUL_CLARO);
@@ -132,19 +97,15 @@ export class PdfService {
     return y + 2;
   }
 
-  // Desenha uma tabela e devolve o Y logo abaixo dela, para a próxima seção.
   private desenharSecao(doc: jsPDF, secao: SecaoRelatorio, y: number): number {
     const altura = doc.internal.pageSize.getHeight();
 
-    // Sem esta quebra, um título que caísse no pé da página ficaria órfão: o
-    // texto numa página e a tabela dele na seguinte.
     if (y + 22 > altura - RODAPE) {
       doc.addPage();
       y = TOPO_CONTINUACAO;
     }
 
     if (secao.titulo) {
-      // Um tico dourado à esquerda marca onde cada bloco começa.
       doc.setFillColor(...DOURADO);
       doc.rect(MARGEM, y + 2.2, 1.6, 4.2, 'F');
 
@@ -160,8 +121,6 @@ export class PdfService {
       head: [secao.colunas],
       body: secao.linhas.map((linha) => linha.map((celula) => String(celula))),
       margin: { top: TOPO_CONTINUACAO, bottom: RODAPE, left: MARGEM, right: MARGEM },
-      // Sem linhas verticais: as colunas se separam pelo espaço, e só um fio
-      // claro embaixo de cada linha guia o olho.
       theme: 'plain',
       styles: {
         font: 'helvetica',
@@ -183,20 +142,9 @@ export class PdfService {
       columnStyles: this.medirColunas(doc, secao),
     });
 
-    // O autoTable guarda em `lastAutoTable` onde parou de desenhar.
     return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
   }
 
-  /**
-   * Reparte a largura da página entre as colunas.
-   *
-   * Deixado a cargo do autoTable, um texto longo (um nome de 100 caracteres,
-   * o máximo que o formulário aceita) toma quase toda a linha e espreme as
-   * outras colunas até virarem uma letra por linha. Aqui a conta é outra:
-   * mede-se o quanto cada coluna *gostaria* de ocupar e, quando a soma não
-   * cabe, aplica-se um teto — só as colunas acima dele são cortadas, e o texto
-   * delas quebra em várias linhas. As colunas curtas ficam intactas.
-   */
   private medirColunas(doc: jsPDF, secao: SecaoRelatorio): {
     [indice: number]: { cellWidth: number };
   } {
@@ -219,8 +167,7 @@ export class PdfService {
     const total = desejadas.reduce((soma, largura) => soma + largura, 0);
     const finais =
       total <= disponivel
-        ? // Sobra espaço: estica todas na mesma proporção, para a tabela ocupar
-          // a largura inteira em vez de terminar no meio da página.
+        ?
           desejadas.map((largura) => (largura * disponivel) / total)
         : this.aplicarTeto(desejadas, disponivel);
 
@@ -229,8 +176,6 @@ export class PdfService {
     return estilos;
   }
 
-  // Acha o teto que faz a soma caber: as colunas que cabem abaixo dele ficam
-  // como estão, e o que sobra é dividido em partes iguais entre as maiores.
   private aplicarTeto(desejadas: number[], disponivel: number): number[] {
     let restante = disponivel;
     let quantas = desejadas.length;
@@ -247,10 +192,6 @@ export class PdfService {
     return desejadas.map((largura) => Math.min(largura, teto));
   }
 
-  // A moldura de todas as páginas: o fio de continuação no topo (da segunda em
-  // diante, já que a primeira tem a tarja) e o rodapé com a paginação. Só dá
-  // para fazer no fim, porque antes disso ainda não se sabe quantas páginas o
-  // documento terá.
   private desenharBordas(doc: jsPDF, relatorio: Relatorio): void {
     const total = doc.getNumberOfPages();
     const largura = doc.internal.pageSize.getWidth();
@@ -291,11 +232,6 @@ export class PdfService {
     }
   }
 
-  // No navegador (e no desktop) o arquivo cai como download, e o Electron abre
-  // o "Salvar como" do sistema. No Android não existe pasta de downloads
-  // acessível direto pela página, então gravamos em cache e abrimos a folha de
-  // compartilhamento para o usuário escolher o destino (salvar, e-mail,
-  // WhatsApp...).
   private async entregar(doc: jsPDF, nomeArquivo: string): Promise<void> {
     if (this.plataforma === 'web' || this.plataforma === 'electron') {
       doc.save(nomeArquivo);
@@ -311,12 +247,10 @@ export class PdfService {
     await Share.share({ title: nomeArquivo, url: uri });
   }
 
-  // Só o base64, sem o prefixo "data:application/pdf;base64,".
   private paraBase64(doc: jsPDF): string {
     return doc.output('datauristring').split(',')[1];
   }
 
-  /** Pública porque a pré-visualização mostra a mesma data do PDF. */
   dataDeHoje(): string {
     return new Date().toLocaleDateString('pt-BR');
   }

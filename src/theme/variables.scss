@@ -1,19 +1,4 @@
-// Identidade visual do SRME
-// ---------------------------------------------------------------------------
-// O tema claro é o padrão; o escuro está no fim do arquivo e só entra quando o
-// usuário o escolhe no botão (ver TemaService) — nunca por conta do sistema.
-//
-// A paleta parte de um azul profundo, sóbrio o bastante para um sistema de
-// registro, com um dourado discreto de apoio — a cor dos metais da orquestra —
-// usado só em destaques. Os fundos são um branco levemente azulado em vez de
-// branco puro, para as superfícies brancas (itens, cards) se destacarem sem
-// precisar de sombra forte.
-//
-// Cada cor do Ionic precisa do trio base/shade/tint e da versão -rgb, que os
-// componentes usam para gerar transparências.
-
 :root {
-  // ----- Azul principal: barras, botões, estados ativos -------------------
   --ion-color-primary: #1e5a8e;
   --ion-color-primary-rgb: 30, 90, 142;
   --ion-color-primary-contrast: #ffffff;
@@ -21,7 +6,6 @@
   --ion-color-primary-shade: #1a4f7d;
   --ion-color-primary-tint: #346a99;
 
-  // ----- Dourado de apoio: só em destaques pontuais -----------------------
   --ion-color-secondary: #c88a2e;
   --ion-color-secondary-rgb: 200, 138, 46;
   --ion-color-secondary-contrast: #ffffff;
@@ -36,7 +20,6 @@
   --ion-color-tertiary-shade: #416d4e;
   --ion-color-tertiary-tint: #5c896a;
 
-  // ----- Cores de estado --------------------------------------------------
   --ion-color-success: #2e7d57;
   --ion-color-success-rgb: 46, 125, 87;
   --ion-color-success-contrast: #ffffff;
@@ -58,7 +41,6 @@
   --ion-color-danger-shade: #9d211a;
   --ion-color-danger-tint: #bb3c35;
 
-  // ----- Neutros ----------------------------------------------------------
   --ion-color-dark: #1c2530;
   --ion-color-dark-rgb: 28, 37, 48;
   --ion-color-dark-contrast: #ffffff;
@@ -80,7 +62,6 @@
   --ion-color-light-shade: #d4d7da;
   --ion-color-light-tint: #f2f5f9;
 
-  // ----- Superfícies e texto ---------------------------------------------
   --ion-background-color: #f5f7fa;
   --ion-background-color-rgb: 245, 247, 250;
 
@@ -91,49 +72,22 @@
   --ion-card-background: #ffffff;
   --ion-toolbar-background: #ffffff;
   --ion-tab-bar-background: #ffffff;
-  // Apontar para a nossa variável, e não repetir o valor: a paleta escura do
-  // Ionic troca os fundos acima por conta própria, mas não mexe em
-  // --ion-border-color. Com a cor escrita à mão aqui, ela continuava clara no
-  // tema escuro e todo traço que o Ionic desenha sozinho — a divisória entre
-  // as famílias de instrumentos, por exemplo — virava uma linha quase branca.
   --ion-border-color: var(--srme-borda-cor);
 
-  // ----- Medidas próprias do app -----------------------------------------
-  // Ficam aqui para o arredondamento, a borda e a sombra serem os mesmos em
-  // toda tela; mudar um valor daqui muda o app inteiro.
   --srme-borda-cor: #e2e8f0;
   --srme-raio: 12px;
   --srme-raio-pequeno: 8px;
   --srme-sombra: 0 1px 2px rgba(28, 37, 48, 0.06), 0 1px 3px rgba(28, 37, 48, 0.04);
   --srme-texto-suave: #5a6673;
-  // Fundo da linha sob o ponteiro do mouse.
   --srme-realce: #f8fafc;
 
-  // Largura da barra lateral no desktop (ver global.scss).
   --srme-largura-menu: 232px;
 }
 
-// No computador, sem sombra: espalhada por um bloco da largura da janela ela
-// lê como cartão de celular flutuando sobre o fundo, e não como a tabela que
-// aquela tela é. Quem separa uma superfície da outra ali é a borda — a mesma
-// escolha que o tema escuro faz logo abaixo.
-// A classe vem do FormatoService, aplicada na abertura do app.
 :root.srme-desktop {
   --srme-sombra: none;
 }
 
-// ---------------------------------------------------------------------------
-// Tema escuro
-//
-// A paleta base (fundos, texto, superfícies) vem do próprio Ionic, importada
-// no global.scss. O que precisa vir daqui são as medidas próprias do app: a
-// cor da borda e a do texto suave foram escolhidas para o fundo claro e, sem
-// ajuste, ficariam invisíveis no escuro. A sombra também some — no escuro
-// quem separa uma superfície da outra é a borda, não a sombra.
-//
-// O azul principal clareia um pouco: o tom do tema claro tem contraste de
-// menos sobre fundo escuro.
-// ---------------------------------------------------------------------------
 :root.ion-palette-dark {
   --ion-color-primary: #6ba3d6;
   --ion-color-primary-rgb: 107, 163, 214;
@@ -145,7 +99,5 @@
   --srme-borda-cor: #2a3441;
   --srme-texto-suave: #98a4b3;
   --srme-sombra: none;
-  // No escuro o realce clareia a linha só o suficiente para se notar; com o
-  // cinza do tema claro aqui, a linha virava um bloco branco e o texto sumia.
   --srme-realce: #222c38;
 }

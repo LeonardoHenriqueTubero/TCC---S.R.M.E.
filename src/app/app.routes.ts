@@ -49,8 +49,6 @@ export const routes: Routes = [
       },
     ],
   },
-  // Formulário de músico fica fora das abas: ele é empurrado por cima (tela
-  // cheia, com botão de voltar) em vez de virar uma aba.
   {
     path: 'musicos/novo',
     loadComponent: () =>

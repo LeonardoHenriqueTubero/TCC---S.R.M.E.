@@ -11,7 +11,6 @@ import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 
-// Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
   debouncer: null,
   ready: false,
@@ -41,7 +40,6 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
     });
 }
 
-// Define our class to manage our app.
 export class ElectronCapacitorApp {
   private MainWindow: BrowserWindow | null = null;
   private TrayIcon: Tray | null = null;
@@ -65,19 +63,16 @@ export class ElectronCapacitorApp {
       this.TrayMenuTemplate = trayMenuTemplate;
     }
 
-    // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
     this.loadWebApp = electronServe({
       directory: join(app.getAppPath(), 'app'),
       scheme: this.customScheme,
     });
   }
 
-  // Helper function to load in the app.
   private async loadMainWindow(thisRef: any) {
     await thisRef.loadWebApp(thisRef.MainWindow);
   }
 
-  // Expose the mainWindow ref for use outside of the class.
   getMainWindow(): BrowserWindow {
     return this.MainWindow;
   }
@@ -94,7 +89,6 @@ export class ElectronCapacitorApp {
       defaultWidth: 1000,
       defaultHeight: 800,
     });
-    // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
     this.MainWindow = new BrowserWindow({
       icon,
@@ -103,17 +97,11 @@ export class ElectronCapacitorApp {
       y: this.mainWindowState.y,
       width: this.mainWindowState.width,
       height: this.mainWindowState.height,
-      // O app não vira mais aplicativo de celular quando a janela encolhe (ver
-      // FormatoService): no computador ele é sempre um programa de computador.
-      // O piso existe por causa disso — abaixo daqui a barra lateral e as
-      // colunas das listagens não teriam onde caber.
       minWidth: 900,
       minHeight: 620,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
-        // Use preload to inject the electron varriant overrides for capacitor plugins.
-        // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
         preload: preloadPath,
       },
     });
@@ -123,7 +111,6 @@ export class ElectronCapacitorApp {
       this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
     }
 
-    // When the tray icon is enabled, setup the options.
     if (this.CapacitorFileConfig.electron?.trayIconAndMenuEnabled) {
       this.TrayIcon = new Tray(icon);
       this.TrayIcon.on('double-click', () => {
@@ -150,19 +137,8 @@ export class ElectronCapacitorApp {
       this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
     }
 
-    // Sem barra de menu. O "File"/"View" que vinha do modelo do Electron só
-    // oferecia recarregar a página, abrir as ferramentas de desenvolvedor e
-    // ajustar o zoom — coisas de quem constrói o app, não de quem o usa, e que
-    // deixavam o programa com cara de projeto inacabado.
-    //
-    // Junto com o menu vão embora os atalhos que ele registrava: o Ctrl+Q para
-    // sair (o botão de fechar da janela continua valendo) e o F11 da tela
-    // cheia, este devolvido logo abaixo.
     Menu.setApplicationMenu(null);
 
-    // O F11 estava no menu "View" removido acima, mas não tem nada de
-    // ferramenta de desenvolvedor: é o atalho de tela cheia que qualquer um
-    // espera de um programa de computador.
     this.MainWindow.webContents.on('before-input-event', (_event, input) => {
       if (input.type === 'keyDown' && input.key === 'F11') {
         this.MainWindow.setFullScreen(!this.MainWindow.isFullScreen());
@@ -171,14 +147,6 @@ export class ElectronCapacitorApp {
 
     this.loadMainWindow(this);
 
-    // Os PDFs dos relatórios chegam aqui como download. Quem abre o "Salvar
-    // como" é o próprio Electron; aqui só o rotulamos, senão o título da janela
-    // vira a URL blob: que o jsPDF gera.
-    //
-    // Este diálogo precisa do Electron 30 ou mais novo. Nas versões antigas ele
-    // não ficava preso à janela do app no Linux: bastava clicar no app para ele
-    // ir para trás sem volta e, sendo modal, travar o programa — em tela cheia
-    // prendia até a barra de tarefas.
     this.MainWindow.webContents.session.on('will-download', (_event, item) => {
       item.setSaveDialogOptions({
         title: 'Salvar relatório',
@@ -187,12 +155,7 @@ export class ElectronCapacitorApp {
       });
     });
 
-    // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
-      // O jsPDF entrega o relatório como blob: — e a URL dele carrega o nosso
-      // esquema, então caía no 'allow' abaixo e abria uma janela vazia (o
-      // Electron não tem visualizador de PDF). Negando aqui, o clique vira um
-      // download de verdade, tratado pelo will-download acima.
       if (details.url.startsWith('blob:')) {
         return { action: 'deny' };
       }
@@ -208,10 +171,8 @@ export class ElectronCapacitorApp {
       }
     });
 
-    // Link electron plugins into the system.
     setupCapacitorElectronPlugins();
 
-    // Com a página pronta, a janela aparece.
     this.MainWindow.webContents.on('dom-ready', () => {
       if (!this.CapacitorFileConfig.electron?.hideMainWindowOnLaunch) {
         this.MainWindow.show();
@@ -226,7 +187,6 @@ export class ElectronCapacitorApp {
   }
 }
 
-// Set a CSP up for our application based on the custom scheme
 export function setupContentSecurityPolicy(customScheme: string): void {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({

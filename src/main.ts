@@ -17,9 +17,6 @@ bootstrapApplication(AppComponent, {
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular(),
     provideRouter(routes, withPreloading(PreloadAllModules)),
-    // Formato e tema são aplicados antes das telas aparecerem, senão o app
-    // pisca — claro para quem escolheu o escuro, de celular para quem está no
-    // computador.
     provideAppInitializer(() => inject(FormatoService).iniciar()),
     provideAppInitializer(() => inject(TemaService).iniciar()),
     provideAppInitializer(() => inject(Database).iniciar()),

@@ -2,9 +2,6 @@
   <ion-toolbar>
     <app-menu-botao slot="start"></app-menu-botao>
     <ion-title>Casas de Oração</ion-title>
-    <!-- No computador a ação principal fica na barra de título, como em
-         qualquer programa de desktop; no celular ela continua sendo o botão
-         flutuante, que o CSS troca conforme a largura da tela. -->
     <ion-buttons slot="end">
       <app-botao-tema></app-botao-tema>
     </ion-buttons>
@@ -39,8 +36,6 @@
 
           <ion-list>
             @for (casa of casasFiltradas(); track casa.id) {
-              <!-- Os botões ficam soltos no item (o item em si não é clicável):
-                   botão dentro de item clicável faz o clique disparar os dois. -->
               <ion-item>
                 <ion-label>{{ casa.nome }}</ion-label>
                 <ion-note slot="end">{{ casa.cidade }}</ion-note>
@@ -52,9 +47,6 @@
                 </ion-button>
               </ion-item>
             } @empty {
-              <!-- Com busca em andamento quem explica o vazio é a barra
-                   ("Nenhum resultado para..."), então aqui só sobra o caso
-                   de não haver nada cadastrado. -->
               @if (!termoBusca.trim()) {
                 <ion-item>
                   <ion-label>Nenhuma casa de oração cadastrada.</ion-label>

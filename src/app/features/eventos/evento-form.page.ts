@@ -56,8 +56,6 @@ export class EventoFormPage implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    // A mesma página atende /eventos/novo e /eventos/:id/editar. Quando existe
-    // o parâmetro :id, buscamos o registro e preenchemos o formulário com ele.
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       return;

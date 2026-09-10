@@ -1,13 +1,3 @@
-// Painel
-// ---------------------------------------------------------------------------
-// As barras são desenhadas com div, e não com uma biblioteca de gráficos: são
-// duas séries de poucos valores, cada barra já traz o seu número na ponta, e
-// carregar um pacote de gráficos para isso engordaria o app à toa.
-//
-// A cor das barras é a única cor de dado da tela, e ela muda com o tema — o
-// azul do tema claro fica escuro demais sobre o fundo escuro. Os dois valores
-// foram conferidos com o validador de paleta (faixa de luminosidade, piso de
-// croma e contraste de 3:1 contra a superfície do cartão).
 :host {
   --painel-barra: #1e5a8e;
 }
@@ -16,7 +6,6 @@
   --painel-barra: #4e92de;
 }
 
-// ----- Cartões ------------------------------------------------------------
 .cartao {
   display: block;
   padding: 18px 20px;
@@ -41,8 +30,6 @@
   color: var(--srme-texto-suave);
 }
 
-// ----- A fileira de números ------------------------------------------------
-// Dois por linha no celular; no computador os cinco cabem lado a lado.
 .numeros {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -59,9 +46,6 @@
   color: inherit;
 }
 
-// Com cinco ladrilhos em duas colunas o último sobra sozinho; ali ele ocupa a
-// linha inteira em vez de deixar um buraco ao lado. Só no celular: no
-// computador os cinco cabem lado a lado e a regra estragaria a fileira.
 :host-context(html.srme-celular) .numeros a:last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
@@ -83,7 +67,6 @@
   color: var(--srme-texto-suave);
 }
 
-// ----- Barras --------------------------------------------------------------
 .barras {
   list-style: none;
   margin: 0;
@@ -108,8 +91,6 @@
   white-space: nowrap;
 }
 
-// O trilho é só o espaço da barra, sem cor de fundo: uma barra cinza atrás de
-// cada barra azul dobraria a tinta sem acrescentar informação.
 .barras .trilho {
   display: block;
   height: 14px;
@@ -119,7 +100,6 @@
   display: block;
   height: 100%;
   background: var(--painel-barra);
-  // Ponta arredondada, base reta: a barra cresce de uma linha de base só.
   border-radius: 0 4px 4px 0;
 }
 
@@ -131,7 +111,6 @@
   text-align: right;
 }
 
-// ----- Últimos lançamentos -------------------------------------------------
 .recentes {
   list-style: none;
   margin: 0;
@@ -183,10 +162,6 @@
   white-space: nowrap;
 }
 
-// ---------------------------------------------------------------------------
-// No computador sobra largura: os cinco números viram uma fileira só e os dois
-// gráficos ficam lado a lado, para o painel caber sem rolagem.
-// ---------------------------------------------------------------------------
 :host-context(html.srme-desktop) {
   .numeros {
     grid-template-columns: repeat(5, 1fr);

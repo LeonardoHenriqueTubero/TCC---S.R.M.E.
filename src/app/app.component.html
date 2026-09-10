@@ -1,7 +1,4 @@
 <ion-app>
-  <!-- O menu das três barrinhas, só no celular. No computador a barra lateral
-       já mostra estas mesmas entradas o tempo todo, então aqui ele fica
-       desligado — e o `ion-menu-button` das telas some junto. -->
   <ion-menu contentId="conteudo-principal" side="start" type="overlay" [disabled]="ehDesktop">
     <ion-header>
       <ion-toolbar>
@@ -10,13 +7,9 @@
     </ion-header>
 
     <ion-content>
-      <!-- A classe não é enfeite: é ela que dá ao global.scss especificidade
-           para apagar o fundo que o Ionic pinta na lista. -->
       <ion-list lines="none" class="lista-do-menu">
         <ion-list-header>Manutenção</ion-list-header>
 
-        <!-- O ion-menu-toggle fecha o menu ao tocar; sem ele a gaveta fica
-             aberta por cima da tela que acabou de abrir. -->
         <ion-menu-toggle>
           <ion-item button detail="true" routerLink="/tabs/backup">
             <ion-icon slot="start" name="save-outline"></ion-icon>

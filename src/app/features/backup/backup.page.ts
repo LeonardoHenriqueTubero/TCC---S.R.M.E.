@@ -32,7 +32,6 @@ addIcons({
   checkmarkCircleOutline,
 });
 
-/** O que a tela está dizendo agora, abaixo dos botões. */
 interface Recado {
   tipo: 'ok' | 'erro';
   texto: string;
@@ -80,19 +79,10 @@ export class BackupPage {
     }
   }
 
-  /**
-   * Chamado pelo <input type="file"> escondido no template.
-   *
-   * O arquivo é lido e conferido antes de qualquer pergunta: só assim a
-   * confirmação consegue dizer o que está prestes a entrar no lugar do que
-   * existe hoje.
-   */
   async aoEscolherArquivo(evento: Event): Promise<void> {
     const entrada = evento.target as HTMLInputElement;
     const arquivo = entrada.files?.[0];
 
-    // Reabre a possibilidade de escolher o mesmo arquivo de novo: sem isto o
-    // input não dispara `change` na segunda vez.
     entrada.value = '';
 
     if (!arquivo) {
@@ -132,8 +122,6 @@ export class BackupPage {
     }
   }
 
-  // "9 músicos, 3 casas de oração e 5 eventos" — as tabelas vazias ficam de
-  // fora para a frase não virar uma lista de zeros.
   private descrever(resumo: { rotulo: string; total: number }[]): string {
     const cheias = resumo.filter((item) => item.total > 0);
 

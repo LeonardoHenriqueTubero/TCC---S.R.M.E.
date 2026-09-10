@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
 
-/** Uma barra do painel: um nome e quanto ele vale. */
 export interface Fatia {
   nome: string;
   total: number;
@@ -10,8 +9,6 @@ export interface Fatia {
 export interface LancamentoRecente {
   id: number;
   data: string;
-  // Nulos de verdade: o LEFT JOIN abaixo devolve nulo quando o evento ou a
-  // casa saiu do cadastro depois do lançamento ter sido feito.
   evento: string | null;
   casa: string | null;
   musicos: number;
@@ -28,13 +25,6 @@ export interface ResumoPainel {
   recentes: LancamentoRecente[];
 }
 
-/**
- * Os números do painel, numa consulta só por assunto.
- *
- * Tudo aqui olha apenas o que está ativo: a exclusão no app é lógica
- * (`ativo = 0`), e um painel que contasse os excluídos mostraria um cadastro
- * maior do que o que as telas listam.
- */
 @Injectable({
   providedIn: 'root',
 })
@@ -59,8 +49,6 @@ export class PainelService {
       contar('lancamento'),
     ]);
 
-    // Só famílias que têm alguém: uma barra de zero não diz nada e ainda
-    // rouba espaço das que dizem.
     const familiaConsulta = await conexao.query(`
       SELECT i.familia AS nome, COUNT(*) AS total
       FROM musico m
@@ -70,9 +58,6 @@ export class PainelService {
       ORDER BY total DESC, i.familia;
     `);
 
-    // Aqui é LEFT JOIN de propósito: uma casa recém-cadastrada, ainda sem
-    // músicos, precisa aparecer com zero — é justamente o que o usuário quer
-    // ver no painel.
     const casaConsulta = await conexao.query(`
       SELECT c.nome AS nome, COUNT(m.id) AS total
       FROM casaOracao c

@@ -41,7 +41,6 @@ import { TAMANHO_MAXIMO } from '../../core/limites';
 })
 export class CasaOracaoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
-  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
   protected readonly ROTULOS = { nome: 'Nome', cidade: 'Cidade' };
 
   private readonly formBuilder = inject(FormBuilder);
@@ -58,8 +57,6 @@ export class CasaOracaoFormPage implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    // A mesma página atende /casas/novo e /casas/:id/editar. Quando existe o
-    // parâmetro :id, buscamos o registro e preenchemos o formulário com ele.
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       return;

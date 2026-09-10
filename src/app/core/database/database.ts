@@ -10,19 +10,8 @@ import {
 const NOME_BANCO = 'srme';
 const VERSAO_BANCO = 1;
 
-// Liga e desliga os dados de amostra. Com `false` o app abre com todas as
-// tabelas vazias, como na mão de quem o instala pela primeira vez — é assim que
-// dá para testar o caminho do usuário novo, inclusive os avisos de "cadastre
-// uma casa de oração antes".
-//
-// ATENÇÃO: isto não apaga nada. Um banco já semeado continua com os dados; para
-// começar limpo é preciso remover o arquivo .db (desktop) ou limpar os dados do
-// app (Android).
 const SEMEAR_DADOS_DE_AMOSTRA = false;
 
-// SQL dos dados iniciais de cada tabela, separado da lógica para o seed ficar
-// fácil de ler e editar. A coluna `ativo` não é preenchida aqui de propósito:
-// a tabela já a define com DEFAULT 1, então todo registro semeado nasce ativo.
 const SEED_INSTRUMENTOS = `
   INSERT INTO instrumento (nome, familia) VALUES ('Violino', 'Cordas');
   INSERT INTO instrumento (nome, familia) VALUES ('Viola', 'Cordas');
@@ -57,8 +46,6 @@ const SEED_EVENTOS = `
   INSERT INTO evento (nome) VALUES ('Santa Ceia');
 `;
 
-// Depende de casaOracao (comum_congregacao) e instrumento já semeados.
-// Os ids batem com a ordem de inserção acima (casas 1-3, instrumentos 1-17).
 const SEED_MUSICOS = `
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('João Silva', 'Sim', 'Sim', 'Músico', 1, 1, 1);
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Pedro Santos', 'Sim', 'Sim', 'Instrutor', 1, 1, 12);
@@ -71,8 +58,6 @@ const SEED_MUSICOS = `
   INSERT INTO musico (nome, oficializado, batizado, cargo, ativo, comum_congregacao, instrumento) VALUES ('Maria Oliveira', 'Sim', 'Sim', 'Organista', 1, 1, 17);
 `;
 
-// Depende de casaOracao (local), evento e musico já semeados.
-// Semeia lancamento e lancamento_musico juntos porque um não faz sentido sem o outro.
 const SEED_LANCAMENTOS = `
   INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-07', 1, 1);
   INSERT INTO lancamento (data, local, evento) VALUES ('2026-06-14', 2, 2);
@@ -92,9 +77,6 @@ const SEED_LANCAMENTOS = `
   INSERT INTO lancamento_musico (id_lancamento, id_musico) VALUES (3, 6);
 `;
 
-// Cada entrada só é inserida se a tabela estiver vazia (o seed é idempotente).
-// A ORDEM importa por causa das chaves estrangeiras: as tabelas referenciadas
-// vêm antes das que dependem delas.
 const SEEDS: { tabela: string; sql: string }[] = [
   { tabela: 'instrumento', sql: SEED_INSTRUMENTOS },
   { tabela: 'casaOracao', sql: SEED_CASAS_ORACAO },
@@ -111,17 +93,9 @@ export class Database {
   private db!: SQLiteDBConnection;
   private plataforma: string = Capacitor.getPlatform();
 
-  // Contador que aumenta a cada gravação no banco. As telas de listagem
-  // observam este sinal para se recarregarem sozinhas quando algo é criado,
-  // editado ou excluído — sem precisar recarregar a página.
   private readonly _versaoDados = signal(0);
   readonly versaoDados = this._versaoDados.asReadonly();
 
-  // Só o navegador precisa do jeep-sqlite: ele emula o SQLite sobre IndexedDB.
-  // No Electron o plugin roda no processo principal com SQLite de verdade
-  // (better-sqlite3), gravando um arquivo .db em disco — chamar initWebStore lá
-  // quebra com "No handler registered for 'CapacitorSQLite-initWebStore'",
-  // porque esse método simplesmente não existe fora da web.
   private get usaArmazenamentoWeb(): boolean {
     return this.plataforma === 'web';
   }
@@ -142,11 +116,6 @@ export class Database {
     await this.persistir();
   }
 
-  // O CREATE TABLE IF NOT EXISTS só cria a tabela quando ela ainda não existe —
-  // ele não altera tabelas já criadas. Então um banco gravado antes da coluna
-  // `ativo` existir continuaria sem ela (e as telas quebrariam com
-  // "no such column"). Aqui a coluna é adicionada quando faltar, preservando os
-  // dados já salvos: as linhas antigas assumem o DEFAULT 1, ou seja, ficam ativas.
   private async migrarEsquema(): Promise<void> {
     const tabelasComAtivo = ['instrumento', 'casaOracao', 'evento', 'lancamento'];
 
@@ -162,9 +131,6 @@ export class Database {
     return (values ?? []).some((c: { name: string }) => c.name === coluna);
   }
 
-  // Percorre a lista de seeds (já na ordem certa de dependências) e insere só
-  // o que ainda não existe. Toda a repetição que antes ficava em vários métodos
-  // agora está concentrada aqui.
   private async semear(): Promise<void> {
     if (!SEMEAR_DADOS_DE_AMOSTRA) {
       return;
@@ -177,19 +143,12 @@ export class Database {
     }
   }
 
-  // Retorna quantas linhas a tabela já tem — usado para não semear de novo.
   private async contar(tabela: string): Promise<number> {
     const { values } = await this.db.query(`SELECT COUNT(*) as total FROM ${tabela};`);
     return values?.[0]?.total ?? 0;
   }
 
   private async abrirConexao(): Promise<SQLiteDBConnection> {
-    // Alinha o registro de conexões do lado nativo com o do JavaScript. No
-    // Android o plugin nativo vive no processo do app, não na WebView: se só a
-    // WebView recarregar, o nativo continua com a conexão aberta enquanto o
-    // JavaScript começa do zero e acha que não existe nenhuma. Sem esta chamada
-    // o createConnection abaixo falha com "Connection srme already exists", o
-    // provideAppInitializer quebra e o app abre em branco.
     await this.sqlite.checkConnectionsConsistency();
 
     const { result: jaExiste } = await this.sqlite.isConnection(NOME_BANCO, false);
@@ -258,10 +217,6 @@ export class Database {
     await this.db.execute(sql);
   }
 
-  // Chamado por todo serviço depois de gravar algo. Na web ainda é preciso
-  // despejar o banco no IndexedDB; no Electron e no Android a escrita já foi
-  // direto no arquivo. Em todas as plataformas avisa as telas de que os dados
-  // mudaram.
   async persistir(): Promise<void> {
     if (this.usaArmazenamentoWeb) {
       await this.sqlite.saveToStore(NOME_BANCO);
@@ -274,12 +229,10 @@ export class Database {
     return this.db;
   }
 
-  /** O nome do banco, para quem precisa conferir se um arquivo é deste app. */
   get nome(): string {
     return NOME_BANCO;
   }
 
-  /** Todo o conteúdo do banco — esquema e linhas — no formato do plugin. */
   async exportar(): Promise<JsonSQLite> {
     const { export: dados } = await this.db.exportToJson('full');
 
@@ -290,30 +243,15 @@ export class Database {
     return dados;
   }
 
-  /**
-   * Troca TODO o banco pelo conteúdo de um backup. Nada é mesclado: o que
-   * existia antes deixa de existir.
-   *
-   * Devolve quantas linhas foram gravadas.
-   */
   async restaurar(dados: JsonSQLite): Promise<number> {
-    // `overwrite` não é capricho. Em modo 'full' o plugin compara a versão do
-    // banco aberto com a do arquivo e, quando são iguais, devolve "0
-    // alterações" sem gravar nada — a restauração falharia calada, que é o
-    // pior jeito de um backup falhar. Com `overwrite` ele apaga o arquivo do
-    // banco e o recria a partir do JSON.
     const completo: JsonSQLite = { ...dados, mode: 'full', overwrite: true };
 
-    // O arquivo do banco está prestes a ser apagado; uma conexão aberta
-    // apontando para ele ficaria escrevendo num arquivo que não existe mais.
     await this.sqlite.closeConnection(NOME_BANCO, false);
 
     const { changes } = await this.sqlite.importFromJson(JSON.stringify(completo));
 
     this.db = await this.abrirConexao();
     await this.db.open();
-    // O backup pode ser antigo, de antes de alguma coluna existir; as mesmas
-    // rotinas da abertura do app põem o esquema em dia.
     await this.criarTabelas();
     await this.migrarEsquema();
     await this.persistir();

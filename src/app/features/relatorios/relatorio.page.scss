@@ -1,17 +1,8 @@
-// Mesmo motivo: o aviso de período invertido é uma mensagem do formulário
-// inteiro, não um rótulo ao lado de um campo.
 .erro {
   display: block;
   font-size: 0.85rem;
 }
 
-// A pré-visualização precisa de uma janela grande: o global.scss dá a todo
-// ion-modal do computador uma caixa de 480x440, do tamanho de um formulário de
-// dois campos, e uma folha A4 não cabe nela. Aqui ela ocupa quase a janela
-// inteira, com um limite para a folha não ficar perdida numa tela larga.
-//
-// O seletor tem uma classe a mais que o do global.scss, que é o que faz esta
-// regra ganhar sem precisar de !important.
 ion-modal.modal-visualizacao {
   --width: 96%;
   --height: 94%;

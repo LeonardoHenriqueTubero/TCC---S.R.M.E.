@@ -47,7 +47,6 @@ import { TAMANHO_MAXIMO } from '../../core/limites';
 })
 export class InstrumentoFormPage implements OnInit {
   protected readonly TAMANHO_MAXIMO = TAMANHO_MAXIMO;
-  // Na ordem dos campos na tela (ver falta-preencher.component.ts).
   protected readonly ROTULOS = { nome: 'Nome', familia: 'Família' };
 
   private readonly formBuilder = inject(FormBuilder);
@@ -55,7 +54,6 @@ export class InstrumentoFormPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  // As famílias são fixas (as mesmas usadas no seed), então ficam direto aqui.
   readonly familias = ['Cordas', 'Madeiras', 'Metais', 'Teclas'];
 
   modoEdicao = false;
@@ -67,8 +65,6 @@ export class InstrumentoFormPage implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    // A mesma página atende /instrumentos/novo e /instrumentos/:id/editar.
-    // Com o parâmetro :id, buscamos o registro e preenchemos o formulário.
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       return;

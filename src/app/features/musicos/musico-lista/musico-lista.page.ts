@@ -68,18 +68,12 @@ export class MusicoListaPage {
   private readonly preRequisitos = inject(PreRequisitosService);
 
   musicos: MusicoListado[] = [];
-  // Vazio = dá para cadastrar. Com itens, o botão de novo músico fica
-  // desabilitado e a tela explica o que falta.
   faltando: PreRequisito[] = [];
   carregando = true;
 
   termoBusca = '';
 
   constructor() {
-    // Carrega na criação da tela e recarrega sozinha sempre que algo é gravado
-    // no banco (criar/editar/excluir, aqui ou em outra tela). Sem isso a lista
-    // ficaria desatualizada até recarregar a página, porque o Ionic mantém as
-    // páginas de aba vivas e o ionViewWillEnter não dispara de novo.
     effect(() => {
       this.database.versaoDados();
       this.carregarMusicos();
@@ -95,17 +89,12 @@ export class MusicoListaPage {
     this.carregando = false;
   }
 
-  // Casa tambem instrumento, casa de oracao e cargo, e nao so o nome: sao as
-  // colunas que a propria linha mostra, e procurar "violino" para ver quem
-  // toca violino e tao natural quanto procurar por alguem.
   musicosFiltrados(): MusicoListado[] {
     return this.musicos.filter((musico) =>
       contemTermo(this.termoBusca, musico.nome, musico.instrumentoNome, musico.casaNome, musico.cargo)
     );
   }
 
-  // Pergunta antes de excluir; a exclusão é lógica (marca ativo = 0), então o
-  // registro apenas some da lista.
   async excluir(musico: Musico): Promise<void> {
     if (musico.id === undefined) {
       return;

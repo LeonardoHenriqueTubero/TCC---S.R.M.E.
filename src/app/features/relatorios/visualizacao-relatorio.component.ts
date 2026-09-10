@@ -6,25 +6,8 @@ import { Relatorio } from '../../shared/services/pdf.service';
 
 addIcons({ downloadOutline, printOutline });
 
-/** Id do bloco que só existe durante a impressão (ver global.scss). */
 const AREA_IMPRESSAO = 'area-impressao';
 
-/**
- * Mostra o relatório na tela antes de virar arquivo, com os botões de imprimir
- * e baixar.
- *
- * Por que o relatório é redesenhado aqui em HTML, em vez de exibir o próprio
- * PDF: nem o Electron nem o WebView do Android trazem visualizador de PDF.
- * Medido — com a CSP liberada para `blob:` e com `webPreferences.plugins`
- * ligado, um <iframe> apontando para o PDF continua em branco, sem erro nenhum
- * no console. A alternativa seria embutir o pdf.js (~1 MB) e desenhar as
- * páginas em canvas, o que ainda por cima faria a impressão sair rasterizada.
- *
- * Redesenhar em HTML custa este arquivo e devolve uma impressão em texto de
- * verdade, que é metade do que se queria. Os dois desenhos não divergem à toa:
- * ambos leem o mesmo `Relatorio` — as mesmas seções, colunas e linhas que o
- * PdfService recebe —, então o que muda de um para o outro é só o acabamento.
- */
 @Component({
   selector: 'app-visualizacao-relatorio',
   imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon],
@@ -48,9 +31,6 @@ const AREA_IMPRESSAO = 'area-impressao';
       </ion-toolbar>
     </ion-header>
 
-    <!-- Rolagem própria, e não um ion-content: o conteúdo do ion-content rola
-         dentro de um div do shadow DOM dele, e é esse div que a impressão
-         recortaria na altura da tela. -->
     <div class="rolagem">
       <article class="folha">
         <header class="tarja">
@@ -106,18 +86,11 @@ const AREA_IMPRESSAO = 'area-impressao';
       flex: 1;
       overflow-y: auto;
       padding: 24px 16px;
-      /* O cinza em volta é o que faz a folha branca parecer uma folha. Fixo de
-         propósito: não acompanha o tema escuro, porque o que está ali dentro é
-         papel, e papel é branco nos dois temas. */
       background: #6b7684;
     }
 
-    /* Daqui para baixo as cores são escritas à mão, e não tiradas das variáveis
-       do tema, pelo mesmo motivo: esta parte representa o papel impresso e
-       precisa ser igual ao PDF (as cores são as do pdf.service.ts). */
     .folha {
-      max-width: 794px; /* A4 a 96 dpi */
-      margin: 0 auto;
+      max-width: 794px;      margin: 0 auto;
       background: #fff;
       color: #1c2530;
       box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
@@ -159,8 +132,6 @@ const AREA_IMPRESSAO = 'area-impressao';
 
     section {
       padding: 18px 28px 0;
-      /* A quebra de página não deve cair entre o título de uma seção e a
-         tabela dele. */
       break-inside: avoid;
     }
 
@@ -169,7 +140,6 @@ const AREA_IMPRESSAO = 'area-impressao';
       padding-left: 10px;
       font-size: 15px;
       font-weight: 700;
-      /* O mesmo tico dourado que o PDF desenha à esquerda de cada seção. */
       border-left: 3px solid #c88a2e;
     }
 
@@ -200,7 +170,6 @@ const AREA_IMPRESSAO = 'area-impressao';
     }
 
     thead {
-      /* Numa tabela que atravessa páginas, o cabeçalho se repete em cada uma. */
       display: table-header-group;
     }
 
@@ -221,7 +190,6 @@ const AREA_IMPRESSAO = 'area-impressao';
 })
 export class VisualizacaoRelatorioComponent implements OnDestroy {
   readonly relatorio = input.required<Relatorio>();
-  /** Data já formatada, recebida pronta para bater com a que o PDF imprime. */
   readonly emitidoEm = input.required<string>();
 
   readonly fechar = output<void>();
@@ -231,17 +199,6 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
 
   private readonly elemento = inject(ElementRef<HTMLElement>);
 
-  /**
-   * A folha é copiada para fora do app e só então impressa.
-   *
-   * Imprimir a folha onde ela está não funciona: ela vive dentro de um
-   * ion-modal, que é posicionado e recortado para caber na tela, e a impressão
-   * herdaria esse recorte — sairia a primeira página e mais nada. Fora do
-   * ion-app a cópia não tem nenhum desses ancestrais, e o navegador a pagina
-   * inteira. As regras que escondem o app e mostram a cópia estão no
-   * global.scss; os estilos da folha continuam valendo porque o Angular os
-   * aplica por atributo, que a cópia carrega junto.
-   */
   imprimir(): void {
     const folha = this.elemento.nativeElement.querySelector('.folha') as HTMLElement | null;
     if (!folha) {
@@ -255,9 +212,6 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
     area.appendChild(folha.cloneNode(true));
     document.body.appendChild(area);
 
-    // A cópia sai de cena assim que a impressão termina (ou é cancelada). Se
-    // este evento não chegar, ela fica invisível na tela de qualquer jeito, e a
-    // próxima impressão — ou o fechar desta tela — a substitui.
     const aoTerminar = () => {
       window.removeEventListener('afterprint', aoTerminar);
       this.limparAreaDeImpressao();

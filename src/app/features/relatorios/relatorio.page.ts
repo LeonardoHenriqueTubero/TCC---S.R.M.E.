@@ -51,13 +51,8 @@ addIcons({
   downloadOutline,
 });
 
-/** Campos que um relatório pede antes de ser gerado. A tela monta o modal a
- *  partir desta lista, então incluir um filtro novo é só acrescentar aqui.
- *  `casa` já vem valendo "todas"; `casaObrigatoria` exige uma escolha. */
 type CampoFiltro = 'musico' | 'periodo' | 'casa' | 'casaObrigatoria' | 'familias';
 
-/** O que o modal devolve. Em `casaId`, 0 significa "todas as casas" e -1 que
- *  o usuário ainda não escolheu nada. */
 interface ValoresFiltro {
   musicoId: number;
   casaId: number;
@@ -66,18 +61,14 @@ interface ValoresFiltro {
   dataFinal: string;
 }
 
-/** Nenhuma casa escolhida ainda — só o filtro obrigatório usa este estado. */
 const CASA_NAO_ESCOLHIDA = -1;
 const TODAS_AS_CASAS = 0;
 
-/** Uma das quatro opções da tela. `montar` só é chamada quando o usuário
- *  escolhe o relatório — nada é consultado no banco antes disso. */
 interface OpcaoRelatorio {
   id: string;
   titulo: string;
   descricao: string;
   icone: string;
-  /** Vazio = gera direto no clique; com itens = abre o modal de filtros antes. */
   campos: CampoFiltro[];
   montar: (filtro: ValoresFiltro) => Promise<Relatorio>;
 }
@@ -117,7 +108,6 @@ interface OpcaoRelatorio {
 export class RelatorioPage {
   protected readonly dataMinima = dataMinima();
   protected readonly dataMaxima = dataMaxima();
-  // Só para a mensagem de erro: ninguém lê 2016-08-06 de primeira.
   protected readonly intervaloDeDatas =
     `${comoBrasileiro(dataMinima())} e ${comoBrasileiro(dataMaxima())}`;
 
@@ -128,25 +118,17 @@ export class RelatorioPage {
   private readonly pdf = inject(PdfService);
   private readonly confirmacao = inject(ConfirmacaoService);
 
-  /** Id do relatório sendo gerado, ou null quando nada está em andamento.
-   *  Serve para mostrar o spinner na linha certa e evitar toques repetidos. */
   gerando: string | null = null;
 
-  /** Relatório aguardando os filtros, ou null com o modal fechado. */
   emFiltro: OpcaoRelatorio | null = null;
 
-  /** Relatório pronto, à espera de ser impresso ou baixado — só no computador
-   *  (ver `temPreVisualizacao`). No celular ele vai direto para o PDF. */
   emVisualizacao: Relatorio | null = null;
 
-  // Carregados sob demanda, só quando o modal que usa cada lista abre.
   musicos: Musico[] = [];
   casas: CasaOracao[] = [];
   familias: string[] = [];
 
   filtros = this.formBuilder.nonNullable.group({
-    // 0 = nada escolhido. No músico isso barra o formulário; na casa de oração
-    // é um valor legítimo e significa "todas".
     musicoId: [0],
     casaId: [TODAS_AS_CASAS],
     familias: [[] as string[]],
@@ -211,8 +193,6 @@ export class RelatorioPage {
     this.emVisualizacao = null;
   }
 
-  // O botão "Baixar PDF" da pré-visualização: monta o arquivo com o mesmo
-  // relatório que está na tela e o entrega como antes.
   async baixarDaVisualizacao(): Promise<void> {
     const relatorio = this.emVisualizacao;
     if (!relatorio) {
@@ -229,8 +209,6 @@ export class RelatorioPage {
     }
   }
 
-  // O select usa 0 para "todas" (e -1 para "ainda não escolhi"); o serviço
-  // espera null nesses dois casos.
   private casaOuTodas(filtro: ValoresFiltro): number | null {
     return filtro.casaId > 0 ? filtro.casaId : null;
   }
@@ -239,14 +217,11 @@ export class RelatorioPage {
     return this.emFiltro?.campos.includes(campo) ?? false;
   }
 
-  // Data final antes da inicial: o BETWEEN não devolveria nada e o usuário
-  // ficaria sem entender por quê, então o erro aparece antes de gerar.
   get periodoInvertido(): boolean {
     const { dataInicial, dataFinal } = this.filtros.getRawValue();
     return dataInicial !== '' && dataFinal !== '' && dataInicial > dataFinal;
   }
 
-  // Cada campo só é exigido quando o relatório escolhido realmente o mostra.
   get filtroInvalido(): boolean {
     const valores = this.filtros.getRawValue();
 
@@ -254,9 +229,6 @@ export class RelatorioPage {
       if (!valores.dataInicial || !valores.dataFinal || this.periodoInvertido) {
         return true;
       }
-      // O intervalo permitido é conferido pelos validadores dos dois campos.
-      // Este getter não olha o estado do formulário em nenhum outro ponto, e
-      // sem esta linha uma data digitada fora do intervalo passaria batido.
       if (this.filtros.controls.dataInicial.invalid || this.filtros.controls.dataFinal.invalid) {
         return true;
       }
@@ -273,7 +245,6 @@ export class RelatorioPage {
     return false;
   }
 
-  // Relatório sem filtro vai direto; com filtro, abre o modal primeiro.
   async escolher(opcao: OpcaoRelatorio): Promise<void> {
     if (this.gerando) {
       return;
@@ -296,8 +267,6 @@ export class RelatorioPage {
 
     this.filtros.reset({
       musicoId: 0,
-      // No filtro obrigatório o select começa vazio, para a escolha ser
-      // consciente; no opcional já vale para todas as casas.
       casaId: opcao.campos.includes('casaObrigatoria') ? CASA_NAO_ESCOLHIDA : TODAS_AS_CASAS,
       familias: [],
       dataInicial: '',
@@ -324,8 +293,6 @@ export class RelatorioPage {
     await this.gerar(opcao);
   }
 
-  // Monta os dados e entrega o PDF. Se não houver nada para mostrar, avisa em
-  // vez de gerar um arquivo vazio.
   private async gerar(opcao: OpcaoRelatorio): Promise<void> {
     this.gerando = opcao.id;
     try {
@@ -341,9 +308,6 @@ export class RelatorioPage {
         return;
       }
 
-      // No computador o relatório aparece na tela primeiro, e é de lá que sai
-      // o imprimir ou o baixar; no celular o compartilhar do sistema já resolve
-      // os dois, então o arquivo é entregue direto.
       if (this.pdf.temPreVisualizacao) {
         this.emVisualizacao = relatorio;
       } else {
