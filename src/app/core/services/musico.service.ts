@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
 import { Musico, MusicoListado } from '../models/musico.model';
+import { normalizar } from '../texto';
 
 @Injectable({
   providedIn: 'root',
@@ -32,6 +33,19 @@ export class MusicoService {
       .getConexao()
       .query('SELECT * FROM musico WHERE id = ? AND ativo = 1;', [id]);
     return resultado.values?.[0];
+  }
+
+  async existeAtivoComNome(nome: string, ignorarId?: number): Promise<boolean> {
+    const procurado = this.chaveNome(nome);
+    const resultado = await this.dbService
+      .getConexao()
+      .query('SELECT id, nome FROM musico WHERE ativo = 1;');
+    const ativos = (resultado.values ?? []) as Pick<Musico, 'id' | 'nome'>[];
+    return ativos.some((m) => m.id !== ignorarId && this.chaveNome(m.nome) === procurado);
+  }
+
+  private chaveNome(nome: string): string {
+    return normalizar(nome.trim().replace(/\s+/g, ' '));
   }
 
   async criar(musico: Omit<Musico, 'id' | 'ativo'>): Promise<void> {

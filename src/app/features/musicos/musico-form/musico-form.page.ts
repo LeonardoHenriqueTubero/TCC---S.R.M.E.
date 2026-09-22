@@ -25,6 +25,7 @@ import { Instrumento } from '../../../core/models/instrumento.model';
 import { SelecaoAdaptavelDirective } from '../../../shared/directives/selecao-adaptavel.directive';
 import { FaltaPreencherComponent } from '../../../shared/components/falta-preencher.component';
 import { TAMANHO_MAXIMO } from '../../../core/limites';
+import { ConfirmacaoService } from '../../../shared/services/confirmacao.service';
 
 @Component({
   selector: 'app-musico-form',
@@ -67,6 +68,7 @@ export class MusicoFormPage implements OnInit {
   private readonly instrumentoService = inject(InstrumentoService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly confirmacao = inject(ConfirmacaoService);
 
   casas: CasaOracao[] = [];
   instrumentos: Instrumento[] = [];
@@ -121,6 +123,14 @@ export class MusicoFormPage implements OnInit {
     }
 
     const valores = this.form.getRawValue();
+
+    if (await this.musicoService.existeAtivoComNome(valores.nome, this.musicoId)) {
+      await this.confirmacao.avisar(
+        'Músico já cadastrado',
+        `Já existe um músico ativo com o nome "${valores.nome.trim()}".`
+      );
+      return;
+    }
 
     if (this.modoEdicao && this.musicoId !== undefined) {
       await this.musicoService.atualizar(this.musicoId, valores);
