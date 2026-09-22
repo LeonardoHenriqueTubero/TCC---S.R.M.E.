@@ -15,6 +15,8 @@ interface LinhaMusico {
 
 const SEM_VALOR = '—';
 
+const FAMILIAS_FORA_DO_PERCENTUAL = ['Teclas'];
+
 export interface FiltroPeriodo {
   dataInicial: string;
   dataFinal: string;
@@ -228,11 +230,12 @@ export class RelatorioService {
     );
 
     const casas = (casasConsulta.values ?? []) as CasaDaRelacao[];
-    if (casas.length === 0) {
+    const familias = this.familiasDoPercentual(filtro.familias);
+    if (casas.length === 0 || familias.length === 0) {
       return null;
     }
 
-    const espacos = filtro.familias.map(() => '?').join(', ');
+    const espacos = familias.map(() => '?').join(', ');
     const contagemConsulta = await conexao.query(
       `
       SELECT m.comum_congregacao AS casaId, i.familia, COUNT(*) AS total
@@ -242,7 +245,7 @@ export class RelatorioService {
         ${porCasa ? 'AND m.comum_congregacao = ?' : ''}
       GROUP BY m.comum_congregacao, i.familia;
       `,
-      porCasa ? [...filtro.familias, filtro.casaId] : [...filtro.familias]
+      porCasa ? [...familias, filtro.casaId] : [...familias]
     );
 
     const contagens = (contagemConsulta.values ?? []) as {
@@ -255,11 +258,11 @@ export class RelatorioService {
       contagens.find((c) => c.casaId === casaId && c.familia === familia)?.total ?? 0;
 
     const nasFamilias = (casaId: number): number =>
-      filtro.familias.reduce((soma, familia) => soma + quantos(casaId, familia), 0);
+      familias.reduce((soma, familia) => soma + quantos(casaId, familia), 0);
 
     const linhas: (string | number)[][] = casas.map((casa) => [
       casa.nome,
-      ...filtro.familias.map((familia) =>
+      ...familias.map((familia) =>
         this.percentual(quantos(casa.id, familia), nasFamilias(casa.id))
       ),
       nasFamilias(casa.id),
@@ -269,7 +272,7 @@ export class RelatorioService {
       const efetivo = casas.reduce((soma, casa) => soma + nasFamilias(casa.id), 0);
       linhas.push([
         'TOTAL',
-        ...filtro.familias.map((familia) => {
+        ...familias.map((familia) => {
           const somaFamilia = casas.reduce((soma, casa) => soma + quantos(casa.id, familia), 0);
           return this.percentual(somaFamilia, efetivo);
         }),
@@ -279,9 +282,13 @@ export class RelatorioService {
 
     return {
       titulo: 'Relação final das orquestras',
-      colunas: ['Casa de Oração', ...filtro.familias, 'Músicos nas famílias'],
+      colunas: ['Casa de Oração', ...familias, 'Músicos nas famílias'],
       linhas,
     };
+  }
+
+  private familiasDoPercentual(familias: string[]): string[] {
+    return familias.filter((familia) => !FAMILIAS_FORA_DO_PERCENTUAL.includes(familia));
   }
 
   private percentual(parte: number, total: number): string {
@@ -387,16 +394,20 @@ export class RelatorioService {
       return null;
     }
 
-    const familias = await this.listarFamilias();
+    const familias = this.familiasDoPercentual(await this.listarFamilias());
     if (familias.length === 0) {
       return null;
     }
 
+    const contados = participantes.filter(
+      (p) => p.familia !== null && familias.includes(p.familia)
+    );
+
     const quantos = (lancamentoId: number, familia: string): number =>
-      participantes.filter((p) => p.lancamentoId === lancamentoId && p.familia === familia).length;
+      contados.filter((p) => p.lancamentoId === lancamentoId && p.familia === familia).length;
 
     const totalDe = (lancamentoId: number): number =>
-      participantes.filter((p) => p.lancamentoId === lancamentoId).length;
+      contados.filter((p) => p.lancamentoId === lancamentoId).length;
 
     const linhas: (string | number)[][] = lancamentos.map((lancamento) => [
       this.formatarData(lancamento.data),
@@ -408,12 +419,12 @@ export class RelatorioService {
     ]);
 
     if (lancamentos.length > 1) {
-      const efetivo = participantes.length;
+      const efetivo = contados.length;
       linhas.push([
         'TOTAL',
         '',
         ...familias.map((familia) =>
-          this.percentual(participantes.filter((p) => p.familia === familia).length, efetivo)
+          this.percentual(contados.filter((p) => p.familia === familia).length, efetivo)
         ),
         efetivo,
       ]);
