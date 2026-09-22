@@ -73,16 +73,34 @@
 
       <ion-content class="ion-padding">
         <form [formGroup]="filtros">
-          @if (precisaDe('musico')) {
+          @if (precisaDe('mesAno')) {
+            <ion-item>
+              <ion-select formControlName="mes" label="Mês" labelPlacement="stacked">
+                @for (nome of meses; track nome) {
+                  <ion-select-option [value]="$index + 1">{{ nome }}</ion-select-option>
+                }
+              </ion-select>
+            </ion-item>
+
+            <ion-item>
+              <ion-select formControlName="ano" label="Ano" labelPlacement="stacked">
+                @for (ano of anos; track ano) {
+                  <ion-select-option [value]="ano">{{ ano }}</ion-select-option>
+                }
+              </ion-select>
+            </ion-item>
+          }
+
+          @if (precisaDe('evento')) {
             <ion-item>
               <ion-select
-                formControlName="musicoId"
-                label="Músico"
+                formControlName="eventoId"
+                label="Evento"
                 labelPlacement="stacked"
-                placeholder="Selecione o músico"
+                placeholder="Selecione o evento"
               >
-                @for (musico of musicos; track musico.id) {
-                  <ion-select-option [value]="musico.id">{{ musico.nome }}</ion-select-option>
+                @for (evento of eventos; track evento.id) {
+                  <ion-select-option [value]="evento.id">{{ evento.nome }}</ion-select-option>
                 }
               </ion-select>
             </ion-item>
@@ -142,6 +160,19 @@
                     {{ casa.nome }} — {{ casa.cidade }}
                   </ion-select-option>
                 }
+              </ion-select>
+            </ion-item>
+          }
+
+          @if (precisaDe('mesAno') && escolheuUmaCasa) {
+            <ion-item>
+              <ion-select
+                formControlName="somenteMusicosDaCasa"
+                label="Músicos no relatório"
+                labelPlacement="stacked"
+              >
+                <ion-select-option [value]="true">Só os músicos desta casa</ion-select-option>
+                <ion-select-option [value]="false">Músicos de todas as casas</ion-select-option>
               </ion-select>
             </ion-item>
           }

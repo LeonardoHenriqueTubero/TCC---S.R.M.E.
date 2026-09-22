@@ -9,12 +9,14 @@ export interface SecaoRelatorio {
   titulo?: string;
   colunas: string[];
   linhas: (string | number)[][];
+  centralizarAPartirDe?: number;
 }
 
 export interface Relatorio {
   titulo: string;
   subtitulo?: string;
   nomeArquivo: string;
+  paisagem?: boolean;
   secoes: SecaoRelatorio[];
 }
 
@@ -48,7 +50,11 @@ export class PdfService {
   }
 
   async gerar(relatorio: Relatorio): Promise<void> {
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({
+      orientation: relatorio.paisagem ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
     let y = this.desenharCabecalho(doc, relatorio);
 
@@ -140,6 +146,12 @@ export class PdfService {
       },
       alternateRowStyles: { fillColor: FUNDO_ALTERNADO },
       columnStyles: this.medirColunas(doc, secao),
+      didParseCell: (celula) => {
+        const inicio = secao.centralizarAPartirDe;
+        if (inicio !== undefined && celula.column.index >= inicio) {
+          celula.cell.styles.halign = 'center';
+        }
+      },
     });
 
     return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
@@ -154,7 +166,7 @@ export class PdfService {
     const desejadas = secao.colunas.map((coluna, indice) => {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(FONTE_TABELA);
-      let maior = doc.getTextWidth(coluna);
+      let maior = Math.max(...coluna.split('\n').map((parte) => doc.getTextWidth(parte)));
 
       doc.setFont('helvetica', 'normal');
       for (const linha of secao.linhas) {

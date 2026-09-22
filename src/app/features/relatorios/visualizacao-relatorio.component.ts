@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, inject, input, output } from '@angula
 import { IonButton, IonButtons, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { downloadOutline, printOutline } from 'ionicons/icons';
-import { Relatorio } from '../../shared/services/pdf.service';
+import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 addIcons({ downloadOutline, printOutline });
 
@@ -32,7 +32,7 @@ const AREA_IMPRESSAO = 'area-impressao';
     </ion-header>
 
     <div class="rolagem">
-      <article class="folha">
+      <article class="folha" [class.paisagem]="relatorio().paisagem">
         <header class="tarja">
           <div class="linha-marca">
             <span class="marca">{{ MARCA }}</span>
@@ -54,7 +54,7 @@ const AREA_IMPRESSAO = 'area-impressao';
               <thead>
                 <tr>
                   @for (coluna of secao.colunas; track $index) {
-                    <th>{{ coluna }}</th>
+                    <th [class.centro]="centralizada(secao, $index)">{{ coluna }}</th>
                   }
                 </tr>
               </thead>
@@ -62,7 +62,7 @@ const AREA_IMPRESSAO = 'area-impressao';
                 @for (linha of secao.linhas; track $index) {
                   <tr>
                     @for (celula of linha; track $index) {
-                      <td>{{ celula }}</td>
+                      <td [class.centro]="centralizada(secao, $index)">{{ celula }}</td>
                     }
                   </tr>
                 }
@@ -90,12 +90,17 @@ const AREA_IMPRESSAO = 'area-impressao';
     }
 
     .folha {
-      max-width: 794px;      margin: 0 auto;
+      max-width: 794px;
+      margin: 0 auto;
       background: #fff;
       color: #1c2530;
       box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
       font-size: 13px;
       line-height: 1.4;
+    }
+
+    .folha.paisagem {
+      max-width: 1123px;
     }
 
     .tarja {
@@ -161,6 +166,14 @@ const AREA_IMPRESSAO = 'area-impressao';
       padding: 5px 7px;
     }
 
+    th {
+      white-space: pre-line;
+    }
+
+    .centro {
+      text-align: center;
+    }
+
     td {
       border-bottom: 1px solid #d6dfe8;
     }
@@ -198,6 +211,10 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
   protected readonly MARCA = 'S.R.M.E.';
 
   private readonly elemento = inject(ElementRef<HTMLElement>);
+
+  protected centralizada(secao: SecaoRelatorio, indice: number): boolean {
+    return secao.centralizarAPartirDe !== undefined && indice >= secao.centralizarAPartirDe;
+  }
 
   imprimir(): void {
     const folha = this.elemento.nativeElement.querySelector('.folha') as HTMLElement | null;

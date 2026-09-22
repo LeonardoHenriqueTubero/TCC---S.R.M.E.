@@ -31,9 +31,9 @@ import {
   downloadOutline,
 } from 'ionicons/icons';
 import { RelatorioService } from '../../core/services/relatorio.service';
-import { MusicoService } from '../../core/services/musico.service';
+import { EventoService } from '../../core/services/evento.service';
 import { CasaOracaoService } from '../../core/services/casa-oracao.service';
-import { Musico } from '../../core/models/musico.model';
+import { Evento } from '../../core/models/evento.model';
 import { CasaOracao } from '../../core/models/casa-oracao.model';
 import { PdfService, Relatorio } from '../../shared/services/pdf.service';
 import { ConfirmacaoService } from '../../shared/services/confirmacao.service';
@@ -51,10 +51,13 @@ addIcons({
   downloadOutline,
 });
 
-type CampoFiltro = 'musico' | 'periodo' | 'casa' | 'casaObrigatoria' | 'familias';
+type CampoFiltro = 'mesAno' | 'evento' | 'periodo' | 'casa' | 'casaObrigatoria' | 'familias';
 
 interface ValoresFiltro {
-  musicoId: number;
+  mes: number;
+  ano: number;
+  eventoId: number;
+  somenteMusicosDaCasa: boolean;
   casaId: number;
   familias: string[];
   dataInicial: string;
@@ -63,6 +66,21 @@ interface ValoresFiltro {
 
 const CASA_NAO_ESCOLHIDA = -1;
 const TODAS_AS_CASAS = 0;
+
+const MESES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
 
 interface OpcaoRelatorio {
   id: string;
@@ -110,9 +128,11 @@ export class RelatorioPage {
   protected readonly dataMaxima = dataMaxima();
   protected readonly intervaloDeDatas =
     `${comoBrasileiro(dataMinima())} e ${comoBrasileiro(dataMaxima())}`;
+  protected readonly meses = MESES;
+  protected readonly anos = this.anosDisponiveis();
 
   private readonly relatorioService = inject(RelatorioService);
-  private readonly musicoService = inject(MusicoService);
+  private readonly eventoService = inject(EventoService);
   private readonly casaOracaoService = inject(CasaOracaoService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly pdf = inject(PdfService);
@@ -124,12 +144,15 @@ export class RelatorioPage {
 
   emVisualizacao: Relatorio | null = null;
 
-  musicos: Musico[] = [];
+  eventos: Evento[] = [];
   casas: CasaOracao[] = [];
   familias: string[] = [];
 
   filtros = this.formBuilder.nonNullable.group({
-    musicoId: [0],
+    mes: [new Date().getMonth() + 1],
+    ano: [new Date().getFullYear()],
+    eventoId: [0],
+    somenteMusicosDaCasa: [true],
     casaId: [TODAS_AS_CASAS],
     familias: [[] as string[]],
     dataInicial: ['', dataDentroDoIntervalo()],
@@ -140,14 +163,16 @@ export class RelatorioPage {
     {
       id: 'musicos',
       titulo: 'Por Músico',
-      descricao: 'Os eventos de que um músico participou dentro de um período.',
+      descricao: 'A presença (P) e as faltas (F) de cada músico nas datas de um evento no mês.',
       icone: 'people-outline',
-      campos: ['musico', 'periodo'],
+      campos: ['mesAno', 'evento', 'casa'],
       montar: (filtro) =>
         this.relatorioService.porMusico({
-          musicoId: filtro.musicoId,
-          dataInicial: filtro.dataInicial,
-          dataFinal: filtro.dataFinal,
+          ano: filtro.ano,
+          mes: filtro.mes,
+          eventoId: filtro.eventoId,
+          casaId: this.casaOuTodas(filtro),
+          somenteMusicosDaCasa: filtro.somenteMusicosDaCasa,
         }),
     },
     {
@@ -213,6 +238,16 @@ export class RelatorioPage {
     return filtro.casaId > 0 ? filtro.casaId : null;
   }
 
+  private anosDisponiveis(): number[] {
+    const ultimo = Number(dataMaxima().slice(0, 4));
+    const primeiro = Number(dataMinima().slice(0, 4));
+    return Array.from({ length: ultimo - primeiro + 1 }, (_, i) => ultimo - i);
+  }
+
+  get escolheuUmaCasa(): boolean {
+    return this.filtros.controls.casaId.value > 0;
+  }
+
   precisaDe(campo: CampoFiltro): boolean {
     return this.emFiltro?.campos.includes(campo) ?? false;
   }
@@ -233,7 +268,7 @@ export class RelatorioPage {
         return true;
       }
     }
-    if (this.precisaDe('musico') && valores.musicoId < 1) {
+    if (this.precisaDe('evento') && valores.eventoId < 1) {
       return true;
     }
     if (this.precisaDe('familias') && valores.familias.length === 0) {
@@ -255,8 +290,8 @@ export class RelatorioPage {
       return;
     }
 
-    if (opcao.campos.includes('musico') && this.musicos.length === 0) {
-      this.musicos = await this.musicoService.listarTodos();
+    if (opcao.campos.includes('evento') && this.eventos.length === 0) {
+      this.eventos = await this.eventoService.listarTodos();
     }
     if (this.usaCasa(opcao) && this.casas.length === 0) {
       this.casas = await this.casaOracaoService.listarTodos();
@@ -266,7 +301,10 @@ export class RelatorioPage {
     }
 
     this.filtros.reset({
-      musicoId: 0,
+      mes: new Date().getMonth() + 1,
+      ano: new Date().getFullYear(),
+      eventoId: 0,
+      somenteMusicosDaCasa: true,
       casaId: opcao.campos.includes('casaObrigatoria') ? CASA_NAO_ESCOLHIDA : TODAS_AS_CASAS,
       familias: [],
       dataInicial: '',

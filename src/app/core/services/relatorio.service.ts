@@ -22,9 +22,28 @@ export interface FiltroPeriodo {
   dataFinal: string;
 }
 
-export interface FiltroMusico extends FiltroPeriodo {
-  musicoId: number;
+export interface FiltroPresenca {
+  ano: number;
+  mes: number;
+  eventoId: number;
+  casaId: number | null;
+  somenteMusicosDaCasa: boolean;
 }
+
+const MESES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
 
 export interface FiltroEvento extends FiltroPeriodo {
   casaId: number | null;
@@ -57,43 +76,101 @@ interface ParticipanteDoEvento {
 export class RelatorioService {
   private readonly dbService = inject(Database);
 
-  async porMusico(filtro: FiltroMusico): Promise<Relatorio> {
+  async porMusico(filtro: FiltroPresenca): Promise<Relatorio> {
     const conexao = this.dbService.getConexao();
+    const porCasa = filtro.casaId !== null;
+    const musicosDaCasa = porCasa && filtro.somenteMusicosDaCasa;
 
-    const musico = await conexao.query('SELECT nome FROM musico WHERE id = ?;', [filtro.musicoId]);
-    const nome = ((musico.values ?? [])[0] as { nome: string } | undefined)?.nome ?? 'Músico';
+    const mes = String(filtro.mes).padStart(2, '0');
+    const dataInicial = `${filtro.ano}-${mes}-01`;
+    const dataFinal = `${filtro.ano}-${mes}-31`;
 
-    const resultado = await conexao.query(
+    const lancamentosConsulta = await conexao.query(
       `
-      SELECT l.data, e.nome AS evento, c.nome AS casa
+      SELECT l.id, l.data, c.nome AS casa
       FROM lancamento l
-      JOIN lancamento_musico lm ON lm.id_lancamento = l.id
-      LEFT JOIN evento e ON e.id = l.evento
       LEFT JOIN casaOracao c ON c.id = l.local
-      WHERE lm.id_musico = ? AND l.ativo = 1 AND l.data BETWEEN ? AND ?
-      ORDER BY l.data;
+      WHERE l.ativo = 1 AND l.evento = ? AND l.data BETWEEN ? AND ?
+        ${porCasa ? 'AND l.local = ?' : ''}
+      ORDER BY l.data, c.nome;
       `,
-      [filtro.musicoId, filtro.dataInicial, filtro.dataFinal]
+      porCasa
+        ? [filtro.eventoId, dataInicial, dataFinal, filtro.casaId]
+        : [filtro.eventoId, dataInicial, dataFinal]
     );
 
-    const participacoes = (resultado.values ?? []) as {
+    const lancamentos = (lancamentosConsulta.values ?? []) as {
+      id: number;
       data: string;
-      evento: string | null;
       casa: string | null;
     }[];
 
+    const presencas = new Set<string>();
+    if (lancamentos.length > 0) {
+      const espacos = lancamentos.map(() => '?').join(', ');
+      const presencasConsulta = await conexao.query(
+        `SELECT id_lancamento, id_musico FROM lancamento_musico WHERE id_lancamento IN (${espacos});`,
+        lancamentos.map((l) => l.id)
+      );
+      for (const p of (presencasConsulta.values ?? []) as {
+        id_lancamento: number;
+        id_musico: number;
+      }[]) {
+        presencas.add(`${p.id_lancamento}-${p.id_musico}`);
+      }
+    }
+
+    const idsPresentes = [...new Set([...presencas].map((chave) => Number(chave.split('-')[1])))];
+    const espacosPresentes = idsPresentes.map(() => '?').join(', ');
+    const musicosConsulta = await conexao.query(
+      `
+      SELECT id, nome
+      FROM musico
+      WHERE (ativo = 1 ${idsPresentes.length > 0 ? `OR id IN (${espacosPresentes})` : ''})
+        ${musicosDaCasa ? 'AND comum_congregacao = ?' : ''}
+      ORDER BY nome;
+      `,
+      musicosDaCasa ? [...idsPresentes, filtro.casaId] : idsPresentes
+    );
+
+    const musicos = (musicosConsulta.values ?? []) as { id: number; nome: string }[];
+
+    const cabecalho = (l: { data: string; casa: string | null }): string => {
+      const [, mesData, dia] = l.data.split('-');
+      return porCasa ? `${dia}/${mesData}` : `${dia}/${mesData}\n${l.casa ?? SEM_VALOR}`;
+    };
+
+    const linhas: (string | number)[][] =
+      lancamentos.length === 0
+        ? []
+        : musicos.map((musico) => {
+            const marcas = lancamentos.map((l) =>
+              presencas.has(`${l.id}-${musico.id}`) ? 'P' : 'F'
+            );
+            const presentes = marcas.filter((marca) => marca === 'P').length;
+            return [musico.nome, ...marcas, presentes, marcas.length - presentes];
+          });
+
+    const evento = await conexao.query('SELECT nome FROM evento WHERE id = ?;', [filtro.eventoId]);
+    const nomeEvento =
+      ((evento.values ?? [])[0] as { nome: string } | undefined)?.nome ?? 'Evento';
+    const nomeCasa = porCasa ? await this.nomeDaCasa(filtro.casaId as number) : 'Todas as casas';
+
     return {
-      titulo: 'Relatório por Músico',
-      subtitulo: `${nome} · ${this.descreverPeriodo(filtro)} · ${this.contar(participacoes.length, 'evento', 'eventos')}`,
-      nomeArquivo: `relatorio-musico-${this.apelidar(nome)}`,
+      titulo: 'Relatório de Presença por Músico',
+      subtitulo: [
+        `${MESES[filtro.mes - 1]} de ${filtro.ano}`,
+        nomeEvento,
+        nomeCasa,
+        this.contar(lancamentos.length, 'data', 'datas'),
+      ].join(' · '),
+      nomeArquivo: `relatorio-presenca-${filtro.ano}-${mes}-${this.apelidar(nomeEvento)}`,
+      paisagem: lancamentos.length > 6,
       secoes: [
         {
-          colunas: ['Data', 'Evento', 'Casa de Oração'],
-          linhas: participacoes.map((p) => [
-            this.formatarData(p.data),
-            p.evento ?? SEM_VALOR,
-            p.casa ?? SEM_VALOR,
-          ]),
+          colunas: ['Músico', ...lancamentos.map(cabecalho), 'Presenças', 'Faltas'],
+          linhas,
+          centralizarAPartirDe: 1,
         },
       ],
     };
