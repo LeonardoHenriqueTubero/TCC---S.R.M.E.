@@ -4,7 +4,7 @@ import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 
 const config: CapacitorElectronConfig = {
   appId: 'br.com.tubero.srme',
-  appName: 'S.R.M.E.',
+  appName: 'SRME',
   webDir: 'www',
   plugins: {
     // O plugin de SQLite do Electron le estas chaves ainda no construtor, sem

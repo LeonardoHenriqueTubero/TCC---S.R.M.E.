@@ -20,7 +20,7 @@ export interface Relatorio {
   secoes: SecaoRelatorio[];
 }
 
-const MARCA = 'S.R.M.E.';
+const MARCA = 'SRME';
 
 const MARGEM = 14;
 const TOPO_CONTINUACAO = 26;

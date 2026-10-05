@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Logo do S.R.M.E." width="120" />
+<img src="assets/logo.svg" alt="Logo do SRME" width="120" />
 
-# S.R.M.E.
+# SRME
 
 ### Sistema de Registro de Músicos em Eventos
 
@@ -19,7 +19,7 @@ Aplicativo para cadastrar os músicos de uma orquestra, registrar quem esteve pr
 
 <br/><br/>
 
-<img src="docs/screenshots/painel.png" alt="Painel do S.R.M.E. no desktop" width="900" />
+<img src="docs/screenshots/painel.png" alt="Painel do SRME no desktop" width="900" />
 
 </div>
 
@@ -45,7 +45,7 @@ Aplicativo para cadastrar os músicos de uma orquestra, registrar quem esteve pr
 
 O controle de presença dos músicos em ensaios, cultos e demais eventos costuma ser feito em papel ou em planilhas soltas, o que torna difícil responder perguntas simples, como *"quantos músicos de cada família tocaram no último ensaio regional?"* ou *"quais músicos faltaram nos ensaios deste mês?"*.
 
-O **S.R.M.E.** centraliza essas informações em um único aplicativo:
+O **SRME** centraliza essas informações em um único aplicativo:
 
 - 📋 **Cadastro** de músicos, casas de oração, eventos e instrumentos;
 - ✅ **Lançamento** da presença dos músicos em cada evento realizado;

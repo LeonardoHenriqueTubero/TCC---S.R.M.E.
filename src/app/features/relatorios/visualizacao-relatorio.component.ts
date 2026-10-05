@@ -208,7 +208,7 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
   readonly fechar = output<void>();
   readonly baixar = output<void>();
 
-  protected readonly MARCA = 'S.R.M.E.';
+  protected readonly MARCA = 'SRME';
 
   private readonly elemento = inject(ElementRef<HTMLElement>);
 
