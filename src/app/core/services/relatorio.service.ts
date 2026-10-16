@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
 import { nomearVisitas } from '../texto';
-import { NAO_SE_APLICA, Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
+import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 interface LinhaMusico {
   nome: string;
@@ -90,7 +90,7 @@ export class RelatorioService {
 
     const lancamentosConsulta = await conexao.query(
       `
-      SELECT l.id, l.data, l.local, c.nome AS casa
+      SELECT l.id, l.data, c.nome AS casa
       FROM lancamento l
       LEFT JOIN casaOracao c ON c.id = l.local
       WHERE l.ativo = 1 AND l.evento = ? AND l.data BETWEEN ? AND ?
@@ -105,7 +105,6 @@ export class RelatorioService {
     const lancamentos = (lancamentosConsulta.values ?? []) as {
       id: number;
       data: string;
-      local: number | null;
       casa: string | null;
     }[];
 
@@ -128,7 +127,7 @@ export class RelatorioService {
     const espacosPresentes = idsPresentes.map(() => '?').join(', ');
     const musicosConsulta = await conexao.query(
       `
-      SELECT id, nome, comum_congregacao AS casaId
+      SELECT id, nome
       FROM musico
       WHERE (ativo = 1 ${idsPresentes.length > 0 ? `OR id IN (${espacosPresentes})` : ''})
         ${musicosDaCasa ? 'AND comum_congregacao = ?' : ''}
@@ -137,29 +136,17 @@ export class RelatorioService {
       musicosDaCasa ? [...idsPresentes, filtro.casaId] : idsPresentes
     );
 
-    const marca = (
-      l: { id: number; local: number | null },
-      musico: { id: number; casaId: number | null }
-    ): string => {
-      if (presencas.has(`${l.id}-${musico.id}`)) {
-        return 'P';
-      }
-      return l.local === musico.casaId ? 'F' : NAO_SE_APLICA;
-    };
+    const marca = (l: { id: number }, musico: { id: number }): 'P' | 'F' =>
+      presencas.has(`${l.id}-${musico.id}`) ? 'P' : 'F';
 
-    const musicos = (
-      (musicosConsulta.values ?? []) as { id: number; nome: string; casaId: number | null }[]
-    ).filter((musico) => lancamentos.some((l) => marca(l, musico) !== NAO_SE_APLICA));
+    const musicos = (musicosConsulta.values ?? []) as { id: number; nome: string }[];
 
     const contarMarcas = (
-      musico: { id: number; casaId: number | null },
-      doPeriodo: { id: number; local: number | null }[]
+      musico: { id: number },
+      doPeriodo: { id: number }[]
     ): { presentes: number; faltas: number } => {
-      const marcas = doPeriodo.map((l) => marca(l, musico));
-      return {
-        presentes: marcas.filter((m) => m === 'P').length,
-        faltas: marcas.filter((m) => m === 'F').length,
-      };
+      const presentes = doPeriodo.filter((l) => marca(l, musico) === 'P').length;
+      return { presentes, faltas: doPeriodo.length - presentes };
     };
 
     const cabecalho = (l: { data: string; casa: string | null }): string => {

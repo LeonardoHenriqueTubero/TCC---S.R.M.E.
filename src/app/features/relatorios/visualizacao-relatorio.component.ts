@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, inject, input, output } from '@angula
 import { IonButton, IonButtons, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { downloadOutline, printOutline } from 'ionicons/icons';
-import { NAO_SE_APLICA, Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
+import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 addIcons({ downloadOutline, printOutline });
 
@@ -63,12 +63,7 @@ const PAGINA_IMPRESSAO = 'pagina-impressao';
                 @for (linha of secao.linhas; track $index) {
                   <tr>
                     @for (celula of linha; track $index) {
-                      <td
-                        [class.centro]="centralizada(secao, $index)"
-                        [class.apagada]="celula === NAO_SE_APLICA"
-                      >
-                        {{ celula }}
-                      </td>
+                      <td [class.centro]="centralizada(secao, $index)">{{ celula }}</td>
                     }
                   </tr>
                 }
@@ -184,10 +179,6 @@ const PAGINA_IMPRESSAO = 'pagina-impressao';
       text-align: center;
     }
 
-    .apagada {
-      color: #6b7684;
-    }
-
     td {
       border-bottom: 1px solid #d6dfe8;
     }
@@ -223,7 +214,6 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
   readonly baixar = output<void>();
 
   protected readonly MARCA = 'SRME';
-  protected readonly NAO_SE_APLICA = NAO_SE_APLICA;
 
   private readonly elemento = inject(ElementRef<HTMLElement>);
 

@@ -25,8 +25,6 @@ export interface Relatorio {
 
 const MARCA = 'SRME';
 
-export const NAO_SE_APLICA = '–';
-
 const MARGEM = 14;
 const TOPO_CONTINUACAO = 26;
 const RODAPE = 18;
@@ -169,9 +167,6 @@ export class PdfService {
         const inicio = secao.centralizarAPartirDe;
         if (inicio !== undefined && celula.column.index >= inicio) {
           celula.cell.styles.halign = 'center';
-        }
-        if (celula.section === 'body' && celula.cell.raw === NAO_SE_APLICA) {
-          celula.cell.styles.textColor = CINZA;
         }
       },
     });
