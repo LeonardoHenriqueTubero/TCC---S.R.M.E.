@@ -10,6 +10,9 @@ export interface SecaoRelatorio {
   colunas: string[];
   linhas: (string | number)[][];
   centralizarAPartirDe?: number;
+  repetirColunas?: number;
+  colunasFinais?: number;
+  novaPagina?: boolean;
 }
 
 export interface Relatorio {
@@ -21,6 +24,8 @@ export interface Relatorio {
 }
 
 const MARCA = 'SRME';
+
+export const NAO_SE_APLICA = '–';
 
 const MARGEM = 14;
 const TOPO_CONTINUACAO = 26;
@@ -50,20 +55,33 @@ export class PdfService {
   }
 
   async gerar(relatorio: Relatorio): Promise<void> {
-    const doc = new jsPDF({
-      orientation: relatorio.paisagem ? 'landscape' : 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+    const doc = this.novoDocumento(relatorio);
 
     let y = this.desenharCabecalho(doc, relatorio);
 
-    for (const secao of relatorio.secoes) {
+    for (const secao of this.dividirEmFolhas(relatorio, doc).secoes) {
       y = this.desenharSecao(doc, secao, y);
     }
 
     this.desenharBordas(doc, relatorio);
     await this.entregar(doc, `${relatorio.nomeArquivo}.pdf`);
+  }
+
+  dividirEmFolhas(relatorio: Relatorio, doc = this.novoDocumento(relatorio)): Relatorio {
+    return {
+      ...relatorio,
+      secoes: ([] as SecaoRelatorio[]).concat(
+        ...relatorio.secoes.map((secao) => this.dividirColunas(doc, secao))
+      ),
+    };
+  }
+
+  private novoDocumento(relatorio: Relatorio): jsPDF {
+    return new jsPDF({
+      orientation: relatorio.paisagem ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
   }
 
   private desenharCabecalho(doc: jsPDF, relatorio: Relatorio): number {
@@ -106,7 +124,7 @@ export class PdfService {
   private desenharSecao(doc: jsPDF, secao: SecaoRelatorio, y: number): number {
     const altura = doc.internal.pageSize.getHeight();
 
-    if (y + 22 > altura - RODAPE) {
+    if ((secao.novaPagina && y > TOPO_CONTINUACAO) || y + 22 > altura - RODAPE) {
       doc.addPage();
       y = TOPO_CONTINUACAO;
     }
@@ -124,6 +142,7 @@ export class PdfService {
 
     autoTable(doc, {
       startY: y + 2,
+      showHead: 'everyPage',
       head: [secao.colunas],
       body: secao.linhas.map((linha) => linha.map((celula) => String(celula))),
       margin: { top: TOPO_CONTINUACAO, bottom: RODAPE, left: MARGEM, right: MARGEM },
@@ -151,10 +170,75 @@ export class PdfService {
         if (inicio !== undefined && celula.column.index >= inicio) {
           celula.cell.styles.halign = 'center';
         }
+        if (celula.section === 'body' && celula.cell.raw === NAO_SE_APLICA) {
+          celula.cell.styles.textColor = CINZA;
+        }
       },
     });
 
     return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+  }
+
+  private dividirColunas(doc: jsPDF, secao: SecaoRelatorio): SecaoRelatorio[] {
+    const inicio = secao.repetirColunas;
+    if (inicio === undefined) {
+      return [secao];
+    }
+
+    const disponivel = doc.internal.pageSize.getWidth() - MARGEM * 2;
+    const minimas = secao.colunas.map((_, indice) => this.larguraMinima(doc, secao, indice));
+    const fim = secao.colunas.length - (secao.colunasFinais ?? 0);
+    const soma = (indices: number[]): number =>
+      indices.reduce((total, indice) => total + minimas[indice], 0);
+
+    const repetidas = Array.from({ length: inicio }, (_, i) => i);
+    const finais = Array.from({ length: secao.colunas.length - fim }, (_, i) => fim + i);
+    const meio = Array.from({ length: fim - inicio }, (_, i) => inicio + i);
+
+    let grupos: number[][] = [meio];
+    for (let partes = 1; partes <= meio.length; partes++) {
+      grupos = this.repartir(meio, partes);
+      const cabem = grupos.every(
+        (grupo, indice) =>
+          soma([...repetidas, ...grupo, ...(indice === grupos.length - 1 ? finais : [])]) <=
+          disponivel
+      );
+      if (cabem) {
+        break;
+      }
+    }
+
+    if (grupos.length === 1) {
+      return [secao];
+    }
+
+    return grupos.map((grupo, indice) => {
+      const ultimo = indice === grupos.length - 1;
+      const colunas = [...repetidas, ...grupo, ...(ultimo ? finais : [])];
+      return {
+        ...secao,
+        titulo: secao.titulo
+          ? `${secao.titulo} — parte ${indice + 1} de ${grupos.length}`
+          : undefined,
+        colunas: colunas.map((coluna) => secao.colunas[coluna]),
+        linhas: secao.linhas.map((linha) => colunas.map((coluna) => linha[coluna])),
+        colunasFinais: ultimo ? secao.colunasFinais : undefined,
+        novaPagina: secao.novaPagina || indice > 0,
+      };
+    });
+  }
+
+  private repartir(indices: number[], partes: number): number[][] {
+    const tamanho = Math.floor(indices.length / partes);
+    const sobra = indices.length % partes;
+    const grupos: number[][] = [];
+    let posicao = 0;
+    for (let parte = 0; parte < partes; parte++) {
+      const quantos = tamanho + (parte < sobra ? 1 : 0);
+      grupos.push(indices.slice(posicao, posicao + quantos));
+      posicao += quantos;
+    }
+    return grupos;
   }
 
   private medirColunas(doc: jsPDF, secao: SecaoRelatorio): {
@@ -177,15 +261,46 @@ export class PdfService {
     });
 
     const total = desejadas.reduce((soma, largura) => soma + largura, 0);
-    const finais =
-      total <= disponivel
-        ?
-          desejadas.map((largura) => (largura * disponivel) / total)
-        : this.aplicarTeto(desejadas, disponivel);
+    const minimas = secao.colunas.map((_, indice) => this.larguraMinima(doc, secao, indice));
+    const somaMinimas = minimas.reduce((soma, largura) => soma + largura, 0);
 
-    const estilos: { [indice: number]: { cellWidth: number } } = {};
-    finais.forEach((largura, indice) => (estilos[indice] = { cellWidth: largura }));
-    return estilos;
+    let finais: number[];
+    if (total <= disponivel) {
+      finais = desejadas.map((largura) => (largura * disponivel) / total);
+    } else if (somaMinimas <= disponivel) {
+      const fator = (disponivel - somaMinimas) / (total - somaMinimas);
+      finais = minimas.map((minima, indice) => minima + (desejadas[indice] - minima) * fator);
+    } else {
+      finais = this.aplicarTeto(desejadas, disponivel);
+    }
+
+    const larguras: { [indice: number]: { cellWidth: number } } = {};
+    finais.forEach((largura, indice) => (larguras[indice] = { cellWidth: largura }));
+    return larguras;
+  }
+
+  private larguraMinima(doc: jsPDF, secao: SecaoRelatorio, indice: number): number {
+    const inteira = indice < (secao.repetirColunas ?? 0);
+    let maior = this.maiorPalavra(doc, secao.colunas[indice], 'bold');
+    for (const linha of secao.linhas) {
+      const celula = String(linha[indice] ?? '');
+      maior = Math.max(
+        maior,
+        inteira ? this.maiorPalavra(doc, celula, 'normal', /\n/) : this.maiorPalavra(doc, celula, 'normal')
+      );
+    }
+    return maior + PREENCHIMENTO_CELULA * 2;
+  }
+
+  private maiorPalavra(
+    doc: jsPDF,
+    texto: string,
+    estilo: 'bold' | 'normal',
+    separador: RegExp = /\s+/
+  ): number {
+    doc.setFont('helvetica', estilo);
+    doc.setFontSize(FONTE_TABELA);
+    return Math.max(0, ...texto.split(separador).map((parte) => doc.getTextWidth(parte)));
   }
 
   private aplicarTeto(desejadas: number[], disponivel: number): number[] {

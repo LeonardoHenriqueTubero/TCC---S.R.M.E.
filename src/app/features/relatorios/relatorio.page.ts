@@ -56,6 +56,7 @@ type CampoFiltro = 'mesAno' | 'evento' | 'periodo' | 'casa' | 'casaObrigatoria' 
 interface ValoresFiltro {
   mes: number;
   ano: number;
+  quantidadeMeses: number;
   eventoId: number;
   somenteMusicosDaCasa: boolean;
   casaId: number;
@@ -151,6 +152,7 @@ export class RelatorioPage {
   filtros = this.formBuilder.nonNullable.group({
     mes: [new Date().getMonth() + 1],
     ano: [new Date().getFullYear()],
+    quantidadeMeses: [1],
     eventoId: [0],
     somenteMusicosDaCasa: [true],
     casaId: [TODAS_AS_CASAS],
@@ -163,13 +165,14 @@ export class RelatorioPage {
     {
       id: 'musicos',
       titulo: 'Por Músico',
-      descricao: 'A presença (P) e as faltas (F) de cada músico nas datas de um evento no mês.',
+      descricao: 'A presença (P) e as faltas (F) de cada músico nas datas de um evento, de 1 a 3 meses.',
       icone: 'people-outline',
       campos: ['mesAno', 'evento', 'casa'],
       montar: (filtro) =>
         this.relatorioService.porMusico({
           ano: filtro.ano,
           mes: filtro.mes,
+          meses: filtro.quantidadeMeses,
           eventoId: filtro.eventoId,
           casaId: this.casaOuTodas(filtro),
           somenteMusicosDaCasa: filtro.somenteMusicosDaCasa,
@@ -303,6 +306,7 @@ export class RelatorioPage {
     this.filtros.reset({
       mes: new Date().getMonth() + 1,
       ano: new Date().getFullYear(),
+      quantidadeMeses: 1,
       eventoId: 0,
       somenteMusicosDaCasa: true,
       casaId: opcao.campos.includes('casaObrigatoria') ? CASA_NAO_ESCOLHIDA : TODAS_AS_CASAS,
@@ -347,7 +351,7 @@ export class RelatorioPage {
       }
 
       if (this.pdf.temPreVisualizacao) {
-        this.emVisualizacao = relatorio;
+        this.emVisualizacao = this.pdf.dividirEmFolhas(relatorio);
       } else {
         await this.pdf.gerar(relatorio);
       }

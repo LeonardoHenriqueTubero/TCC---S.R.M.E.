@@ -2,11 +2,12 @@ import { Component, ElementRef, OnDestroy, inject, input, output } from '@angula
 import { IonButton, IonButtons, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { downloadOutline, printOutline } from 'ionicons/icons';
-import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
+import { NAO_SE_APLICA, Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 addIcons({ downloadOutline, printOutline });
 
 const AREA_IMPRESSAO = 'area-impressao';
+const PAGINA_IMPRESSAO = 'pagina-impressao';
 
 @Component({
   selector: 'app-visualizacao-relatorio',
@@ -46,7 +47,7 @@ const AREA_IMPRESSAO = 'area-impressao';
         }
 
         @for (secao of relatorio().secoes; track $index) {
-          <section>
+          <section [class.nova-pagina]="secao.novaPagina">
             @if (secao.titulo) {
               <h2>{{ secao.titulo }}</h2>
             }
@@ -62,7 +63,12 @@ const AREA_IMPRESSAO = 'area-impressao';
                 @for (linha of secao.linhas; track $index) {
                   <tr>
                     @for (celula of linha; track $index) {
-                      <td [class.centro]="centralizada(secao, $index)">{{ celula }}</td>
+                      <td
+                        [class.centro]="centralizada(secao, $index)"
+                        [class.apagada]="celula === NAO_SE_APLICA"
+                      >
+                        {{ celula }}
+                      </td>
                     }
                   </tr>
                 }
@@ -140,6 +146,10 @@ const AREA_IMPRESSAO = 'area-impressao';
       break-inside: avoid;
     }
 
+    section.nova-pagina {
+      break-before: page;
+    }
+
     section h2 {
       margin: 0 0 8px;
       padding-left: 10px;
@@ -172,6 +182,10 @@ const AREA_IMPRESSAO = 'area-impressao';
 
     .centro {
       text-align: center;
+    }
+
+    .apagada {
+      color: #6b7684;
     }
 
     td {
@@ -209,6 +223,7 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
   readonly baixar = output<void>();
 
   protected readonly MARCA = 'SRME';
+  protected readonly NAO_SE_APLICA = NAO_SE_APLICA;
 
   private readonly elemento = inject(ElementRef<HTMLElement>);
 
@@ -229,6 +244,13 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
     area.appendChild(folha.cloneNode(true));
     document.body.appendChild(area);
 
+    if (this.relatorio().paisagem) {
+      const pagina = document.createElement('style');
+      pagina.id = PAGINA_IMPRESSAO;
+      pagina.textContent = '@media print { @page { size: A4 landscape; } }';
+      document.head.appendChild(pagina);
+    }
+
     const aoTerminar = () => {
       window.removeEventListener('afterprint', aoTerminar);
       this.limparAreaDeImpressao();
@@ -244,5 +266,6 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
 
   private limparAreaDeImpressao(): void {
     document.getElementById(AREA_IMPRESSAO)?.remove();
+    document.getElementById(PAGINA_IMPRESSAO)?.remove();
   }
 }

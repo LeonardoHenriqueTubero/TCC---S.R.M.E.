@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
-import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
+import { NAO_SE_APLICA, Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 interface LinhaMusico {
   nome: string;
@@ -25,6 +25,7 @@ export interface FiltroPeriodo {
 export interface FiltroPresenca {
   ano: number;
   mes: number;
+  meses: number;
   eventoId: number;
   casaId: number | null;
   somenteMusicosDaCasa: boolean;
@@ -81,13 +82,13 @@ export class RelatorioService {
     const porCasa = filtro.casaId !== null;
     const musicosDaCasa = porCasa && filtro.somenteMusicosDaCasa;
 
-    const mes = String(filtro.mes).padStart(2, '0');
-    const dataInicial = `${filtro.ano}-${mes}-01`;
-    const dataFinal = `${filtro.ano}-${mes}-31`;
+    const meses = this.mesesAPartirDe(filtro.ano, filtro.mes, filtro.meses);
+    const dataInicial = `${meses[0].chave}-01`;
+    const dataFinal = `${meses[meses.length - 1].chave}-31`;
 
     const lancamentosConsulta = await conexao.query(
       `
-      SELECT l.id, l.data, c.nome AS casa
+      SELECT l.id, l.data, l.local, c.nome AS casa
       FROM lancamento l
       LEFT JOIN casaOracao c ON c.id = l.local
       WHERE l.ativo = 1 AND l.evento = ? AND l.data BETWEEN ? AND ?
@@ -102,6 +103,7 @@ export class RelatorioService {
     const lancamentos = (lancamentosConsulta.values ?? []) as {
       id: number;
       data: string;
+      local: number | null;
       casa: string | null;
     }[];
 
@@ -124,7 +126,7 @@ export class RelatorioService {
     const espacosPresentes = idsPresentes.map(() => '?').join(', ');
     const musicosConsulta = await conexao.query(
       `
-      SELECT id, nome
+      SELECT id, nome, comum_congregacao AS casaId
       FROM musico
       WHERE (ativo = 1 ${idsPresentes.length > 0 ? `OR id IN (${espacosPresentes})` : ''})
         ${musicosDaCasa ? 'AND comum_congregacao = ?' : ''}
@@ -133,47 +135,116 @@ export class RelatorioService {
       musicosDaCasa ? [...idsPresentes, filtro.casaId] : idsPresentes
     );
 
-    const musicos = (musicosConsulta.values ?? []) as { id: number; nome: string }[];
+    const marca = (
+      l: { id: number; local: number | null },
+      musico: { id: number; casaId: number | null }
+    ): string => {
+      if (presencas.has(`${l.id}-${musico.id}`)) {
+        return 'P';
+      }
+      return l.local === musico.casaId ? 'F' : NAO_SE_APLICA;
+    };
+
+    const musicos = (
+      (musicosConsulta.values ?? []) as { id: number; nome: string; casaId: number | null }[]
+    ).filter((musico) => lancamentos.some((l) => marca(l, musico) !== NAO_SE_APLICA));
+
+    const contarMarcas = (
+      musico: { id: number; casaId: number | null },
+      doPeriodo: { id: number; local: number | null }[]
+    ): { presentes: number; faltas: number } => {
+      const marcas = doPeriodo.map((l) => marca(l, musico));
+      return {
+        presentes: marcas.filter((m) => m === 'P').length,
+        faltas: marcas.filter((m) => m === 'F').length,
+      };
+    };
 
     const cabecalho = (l: { data: string; casa: string | null }): string => {
       const [, mesData, dia] = l.data.split('-');
       return porCasa ? `${dia}/${mesData}` : `${dia}/${mesData}\n${l.casa ?? SEM_VALOR}`;
     };
 
-    const linhas: (string | number)[][] =
-      lancamentos.length === 0
-        ? []
-        : musicos.map((musico) => {
-            const marcas = lancamentos.map((l) =>
-              presencas.has(`${l.id}-${musico.id}`) ? 'P' : 'F'
-            );
-            const presentes = marcas.filter((marca) => marca === 'P').length;
-            return [musico.nome, ...marcas, presentes, marcas.length - presentes];
-          });
+    const mesesComDatas = meses
+      .map((mes) => ({ ...mes, lancamentos: lancamentos.filter((l) => l.data.startsWith(mes.chave)) }))
+      .filter((mes) => mes.lancamentos.length > 0);
+
+    const secoes: SecaoRelatorio[] = mesesComDatas.map((mes, indice) => ({
+      titulo: `${mes.nome} (${this.contar(mes.lancamentos.length, 'data', 'datas')})`,
+      colunas: ['Músico', ...mes.lancamentos.map(cabecalho), 'Presenças', 'Faltas'],
+      linhas: musicos.map((musico) => {
+        const { presentes, faltas } = contarMarcas(musico, mes.lancamentos);
+        return [musico.nome, ...mes.lancamentos.map((l) => marca(l, musico)), presentes, faltas];
+      }),
+      centralizarAPartirDe: 1,
+      repetirColunas: 1,
+      colunasFinais: 2,
+      novaPagina: indice > 0,
+    }));
+
+    if (mesesComDatas.length > 1) {
+      secoes.push({
+        titulo: 'Resumo do período',
+        colunas: [
+          'Músico',
+          ...mesesComDatas.map((mes) => `${mes.nome}\nPresenças`),
+          'Presenças',
+          'Faltas',
+          'Frequência',
+        ],
+        linhas: musicos.map((musico) => {
+          const { presentes, faltas } = contarMarcas(musico, lancamentos);
+          return [
+            musico.nome,
+            ...mesesComDatas.map((mes) => contarMarcas(musico, mes.lancamentos).presentes),
+            presentes,
+            faltas,
+            this.percentual(presentes, presentes + faltas),
+          ];
+        }),
+        centralizarAPartirDe: 1,
+        novaPagina: true,
+      });
+    }
 
     const evento = await conexao.query('SELECT nome FROM evento WHERE id = ?;', [filtro.eventoId]);
     const nomeEvento =
       ((evento.values ?? [])[0] as { nome: string } | undefined)?.nome ?? 'Evento';
     const nomeCasa = porCasa ? await this.nomeDaCasa(filtro.casaId as number) : 'Todas as casas';
 
+    const primeiro = meses[0];
+    const ultimo = meses[meses.length - 1];
+
     return {
       titulo: 'Relatório de Presença por Músico',
       subtitulo: [
-        `${MESES[filtro.mes - 1]} de ${filtro.ano}`,
+        meses.length === 1 ? primeiro.nome : `${primeiro.nome} a ${ultimo.nome}`,
         nomeEvento,
         nomeCasa,
         this.contar(lancamentos.length, 'data', 'datas'),
       ].join(' · '),
-      nomeArquivo: `relatorio-presenca-${filtro.ano}-${mes}-${this.apelidar(nomeEvento)}`,
-      paisagem: lancamentos.length > 6,
-      secoes: [
-        {
-          colunas: ['Músico', ...lancamentos.map(cabecalho), 'Presenças', 'Faltas'],
-          linhas,
-          centralizarAPartirDe: 1,
-        },
-      ],
+      nomeArquivo: `relatorio-presenca-${primeiro.chave}${
+        meses.length > 1 ? `-a-${ultimo.chave}` : ''
+      }-${this.apelidar(nomeEvento)}`,
+      paisagem: true,
+      secoes,
     };
+  }
+
+  private mesesAPartirDe(
+    ano: number,
+    mes: number,
+    quantidade: number
+  ): { chave: string; nome: string }[] {
+    return Array.from({ length: Math.min(Math.max(quantidade, 1), 3) }, (_, i) => {
+      const indice = mes - 1 + i;
+      const anoDoMes = ano + Math.floor(indice / 12);
+      const mesDoAno = (indice % 12) + 1;
+      return {
+        chave: `${anoDoMes}-${String(mesDoAno).padStart(2, '0')}`,
+        nome: `${MESES[mesDoAno - 1]} de ${anoDoMes}`,
+      };
+    });
   }
 
   async porCasaOracao(filtro: FiltroCasa): Promise<Relatorio> {
