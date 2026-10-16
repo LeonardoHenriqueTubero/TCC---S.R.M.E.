@@ -47,12 +47,12 @@ export class BackupService {
     }
 
     if (!dados?.tables?.length) {
-      throw new ErroDeBackup('Este arquivo não parece ser um backup do SRME');
+      throw new ErroDeBackup('Este arquivo não parece ser um backup do SRME.');
     }
 
     if (dados.database !== this.database.nome) {
       throw new ErroDeBackup(
-        `Este backup é do banco "${dados.database}", não do SRME Nada foi alterado.`
+        `Este backup é do banco "${dados.database}", não do SRME. Nada foi alterado.`
       );
     }
 
