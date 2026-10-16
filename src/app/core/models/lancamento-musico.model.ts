@@ -2,6 +2,7 @@ import { Musico } from "./musico.model";
 
 export interface MusicoDoLancamento extends Musico {
   instrumentoNome: string | null
+  instrumentoFamilia: string | null
 }
 
 export interface LancamentoComMusicos {

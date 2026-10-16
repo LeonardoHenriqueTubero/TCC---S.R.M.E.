@@ -27,7 +27,7 @@ export class LancamentoService {
     for (const lancamento of lancamentos) {
       const musicosResultado = await conexao.query(
         `
-        SELECT m.*, i.nome AS instrumentoNome
+        SELECT m.*, i.nome AS instrumentoNome, i.familia AS instrumentoFamilia
         FROM musico m
         JOIN lancamento_musico lm ON lm.id_musico = m.id
         LEFT JOIN instrumento i ON i.id = m.instrumento

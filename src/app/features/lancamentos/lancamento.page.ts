@@ -55,6 +55,8 @@ addIcons({
   trashOutline,
 });
 
+const FAMILIA_DAS_ORGANISTAS = 'Teclas';
+
 @Component({
   selector: 'app-lancamento',
   templateUrl: './lancamento.page.html',
@@ -167,8 +169,19 @@ export class LancamentoPage {
   }
 
   resumoMusicos(lancamento: LancamentoComMusicos): string {
-    const quantidade = lancamento.musicos.length;
-    return quantidade === 1 ? '1 músico' : `${quantidade} músicos`;
+    const organistas = lancamento.musicos.filter(
+      (musico) => musico.instrumentoFamilia === FAMILIA_DAS_ORGANISTAS
+    ).length;
+    const musicos = lancamento.musicos.length - organistas;
+
+    const partes: string[] = [];
+    if (musicos > 0) {
+      partes.push(musicos === 1 ? '1 músico' : `${musicos} músicos`);
+    }
+    if (organistas > 0) {
+      partes.push(organistas === 1 ? '1 organista' : `${organistas} organistas`);
+    }
+    return partes.join(' - ');
   }
 
   async excluir(lancamento: LancamentoComMusicos): Promise<void> {
