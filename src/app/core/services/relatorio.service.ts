@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
+import { nomearVisitas } from '../texto';
 import { NAO_SE_APLICA, Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 interface LinhaMusico {
@@ -69,6 +70,7 @@ interface ParticipanteDoEvento {
   nome: string;
   instrumento: string | null;
   familia: string | null;
+  visita: boolean;
 }
 
 @Injectable({
@@ -477,11 +479,16 @@ export class RelatorioService {
 
     const secoes: SecaoRelatorio[] = lancamentos.map((lancamento) => {
       const doEvento = participantes.filter((p) => p.lancamentoId === lancamento.id);
+      const visitas = doEvento.filter((p) => p.visita).length;
+      const quantos = [
+        this.contar(doEvento.length - visitas, 'músico', 'músicos'),
+        ...(visitas > 0 ? [this.contar(visitas, 'visita', 'visitas')] : []),
+      ].join(', ');
 
       return {
         titulo: `${lancamento.evento ?? SEM_VALOR} — ${this.formatarData(lancamento.data)} — ${
           lancamento.casa ?? SEM_VALOR
-        } (${this.contar(doEvento.length, 'músico', 'músicos')})`,
+        } (${quantos})`,
         colunas: ['Músico', 'Instrumento', 'Família'],
         linhas: doEvento.map((p) => [
           p.nome,
@@ -517,8 +524,9 @@ export class RelatorioService {
       return [];
     }
 
+    const conexao = this.dbService.getConexao();
     const espacos = lancamentoIds.map(() => '?').join(', ');
-    const resultado = await this.dbService.getConexao().query(
+    const resultado = await conexao.query(
       `
       SELECT lm.id_lancamento AS lancamentoId, m.nome,
              i.nome AS instrumento, i.familia
@@ -531,7 +539,42 @@ export class RelatorioService {
       lancamentoIds
     );
 
-    return (resultado.values ?? []) as ParticipanteDoEvento[];
+    const visitasConsulta = await conexao.query(
+      `
+      SELECT v.id_lancamento AS lancamentoId, v.nome,
+             i.nome AS instrumento, i.familia
+      FROM lancamento_visita v
+      LEFT JOIN instrumento i ON i.id = v.instrumento
+      WHERE v.id_lancamento IN (${espacos})
+      ORDER BY v.id;
+      `,
+      lancamentoIds
+    );
+
+    const visitas = (visitasConsulta.values ?? []) as (Omit<ParticipanteDoEvento, 'nome' | 'visita'> & {
+      nome: string | null;
+    })[];
+
+    const visitasNomeadas: ParticipanteDoEvento[] = [];
+    for (const id of lancamentoIds) {
+      for (const { anonima, ...visita } of nomearVisitas(
+        visitas.filter((v) => v.lancamentoId === id)
+      )) {
+        visitasNomeadas.push({
+          ...visita,
+          nome: anonima ? visita.nome : `${visita.nome} (visita)`,
+          visita: true,
+        });
+      }
+    }
+
+    return [
+      ...((resultado.values ?? []) as Omit<ParticipanteDoEvento, 'visita'>[]).map((p) => ({
+        ...p,
+        visita: false,
+      })),
+      ...visitasNomeadas,
+    ];
   }
 
   private async relacaoDosEventos(

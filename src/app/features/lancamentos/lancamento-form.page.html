@@ -88,6 +88,62 @@
             </div>
           </ion-list>
 
+          <ion-list class="lista-visitas">
+            <ion-list-header>
+              <ion-label>
+                Visitas
+                <ion-note>{{ visitas.length }} adicionada(s)</ion-note>
+              </ion-label>
+            </ion-list-header>
+
+            @for (visita of visitas; track visita; let indice = $index) {
+              <div class="visita">
+                <ion-item>
+                  <ion-input
+                    label="Nome (opcional)"
+                    labelPlacement="stacked"
+                    [placeholder]="nomePadrao(indice)"
+                    [value]="visita.nome"
+                    [maxlength]="TAMANHO_MAXIMO.nome"
+                    (ionInput)="visita.nome = $event.detail.value ?? null"
+                  ></ion-input>
+                </ion-item>
+                <ion-item>
+                  <ion-select
+                    label="Instrumento"
+                    labelPlacement="stacked"
+                    placeholder="Selecione o instrumento"
+                    [value]="visita.instrumento"
+                    (ionChange)="visita.instrumento = $event.detail.value"
+                  >
+                    @for (instrumento of instrumentos; track instrumento.id) {
+                      <ion-select-option [value]="instrumento.id">
+                        {{ instrumento.nome }} — {{ instrumento.familia }}
+                      </ion-select-option>
+                    }
+                  </ion-select>
+                </ion-item>
+                <ion-button
+                  type="button"
+                  fill="clear"
+                  color="danger"
+                  size="small"
+                  (click)="removerVisita(indice)"
+                >
+                  <ion-icon slot="start" name="trash-outline"></ion-icon>
+                  Remover {{ visita.nome?.trim() || nomePadrao(indice) }}
+                </ion-button>
+              </div>
+            }
+
+            <div class="adicionar-visita">
+              <ion-button type="button" fill="outline" size="small" (click)="adicionarVisita()">
+                <ion-icon slot="start" name="add-outline"></ion-icon>
+                Adicionar visita
+              </ion-button>
+            </div>
+          </ion-list>
+
           <app-falta-preencher
             [form]="form"
             [rotulos]="ROTULOS"
@@ -97,7 +153,7 @@
           <ion-button
             expand="block"
             type="submit"
-            [disabled]="form.invalid || musicosSelecionados.length === 0"
+            [disabled]="form.invalid || pendenciasExtras().length > 0"
             class="ion-margin-top"
           >
             Salvar

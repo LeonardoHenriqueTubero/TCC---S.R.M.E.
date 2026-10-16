@@ -139,7 +139,8 @@ export class LancamentoPage {
         this.termoBusca,
         lancamento.nomeEvento,
         lancamento.nomeCasaOracao,
-        ...lancamento.musicos.map((musico) => musico.nome)
+        ...lancamento.musicos.map((musico) => musico.nome),
+        ...lancamento.visitas.map((visita) => visita.nome)
       );
     });
   }
@@ -168,7 +169,7 @@ export class LancamentoPage {
     }
   }
 
-  resumoMusicos(lancamento: LancamentoComMusicos): string {
+  resumoMusicos(lancamento: LancamentoComMusicos): string[] {
     const organistas = lancamento.musicos.filter(
       (musico) => musico.instrumentoFamilia === FAMILIA_DAS_ORGANISTAS
     ).length;
@@ -181,7 +182,11 @@ export class LancamentoPage {
     if (organistas > 0) {
       partes.push(organistas === 1 ? '1 organista' : `${organistas} organistas`);
     }
-    return partes.join(' - ');
+    const visitas = lancamento.visitas.length;
+    if (visitas > 0) {
+      partes.push(visitas === 1 ? '1 visita' : `${visitas} visitas`);
+    }
+    return partes;
   }
 
   async excluir(lancamento: LancamentoComMusicos): Promise<void> {

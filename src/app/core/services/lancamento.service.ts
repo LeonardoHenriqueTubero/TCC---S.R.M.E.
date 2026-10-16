@@ -1,7 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
 import { Lancamento } from '../models/lancamento.model';
-import { LancamentoComMusicos, MusicoDoLancamento } from '../models/lancamento-musico.model';
+import {
+  LancamentoComMusicos,
+  MusicoDoLancamento,
+  Visita,
+  VisitaDoLancamento,
+} from '../models/lancamento-musico.model';
+import { nomearVisitas } from '../texto';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +27,10 @@ export class LancamentoService {
       ORDER BY l.data DESC;
     `);
 
-    const lancamentos = (resultado.values ?? []) as Omit<LancamentoComMusicos, 'musicos'>[];
+    const lancamentos = (resultado.values ?? []) as Omit<
+      LancamentoComMusicos,
+      'musicos' | 'visitas'
+    >[];
 
     const completos: LancamentoComMusicos[] = [];
     for (const lancamento of lancamentos) {
@@ -37,9 +46,23 @@ export class LancamentoService {
         [lancamento.id]
       );
 
+      const visitasResultado = await conexao.query(
+        `
+        SELECT v.nome, i.nome AS instrumentoNome, i.familia AS instrumentoFamilia
+        FROM lancamento_visita v
+        LEFT JOIN instrumento i ON i.id = v.instrumento
+        WHERE v.id_lancamento = ?
+        ORDER BY v.id;
+        `,
+        [lancamento.id]
+      );
+
       completos.push({
         ...lancamento,
         musicos: (musicosResultado.values ?? []) as MusicoDoLancamento[],
+        visitas: nomearVisitas(
+          (visitasResultado.values ?? []) as Omit<VisitaDoLancamento, 'anonima'>[]
+        ),
       });
     }
 
@@ -60,7 +83,21 @@ export class LancamentoService {
     return (resultado.values ?? []).map((linha: { id_musico: number }) => linha.id_musico);
   }
 
-  async criar(lancamento: Omit<Lancamento, 'id' | 'ativo'>, musicoIds: number[]): Promise<void> {
+  async listarVisitas(lancamentoId: number): Promise<Visita[]> {
+    const resultado = await this.dbService
+      .getConexao()
+      .query(
+        'SELECT nome, instrumento FROM lancamento_visita WHERE id_lancamento = ? ORDER BY id;',
+        [lancamentoId]
+      );
+    return (resultado.values ?? []) as Visita[];
+  }
+
+  async criar(
+    lancamento: Omit<Lancamento, 'id' | 'ativo'>,
+    musicoIds: number[],
+    visitas: Visita[]
+  ): Promise<void> {
     const conexao = this.dbService.getConexao();
 
     const resultado = await conexao.run(
@@ -74,13 +111,15 @@ export class LancamentoService {
     }
 
     await this.ligarMusicos(lancamentoId, musicoIds);
+    await this.gravarVisitas(lancamentoId, visitas);
     await this.dbService.persistir();
   }
 
   async atualizar(
     id: number,
     lancamento: Omit<Lancamento, 'id' | 'ativo'>,
-    musicoIds: number[]
+    musicoIds: number[],
+    visitas: Visita[]
   ): Promise<void> {
     const conexao = this.dbService.getConexao();
 
@@ -93,6 +132,9 @@ export class LancamentoService {
 
     await conexao.run('DELETE FROM lancamento_musico WHERE id_lancamento = ?', [id]);
     await this.ligarMusicos(id, musicoIds);
+
+    await conexao.run('DELETE FROM lancamento_visita WHERE id_lancamento = ?', [id]);
+    await this.gravarVisitas(id, visitas);
 
     await this.dbService.persistir();
   }
@@ -110,6 +152,17 @@ export class LancamentoService {
         lancamentoId,
         musicoId,
       ]);
+    }
+  }
+
+  private async gravarVisitas(lancamentoId: number, visitas: Visita[]): Promise<void> {
+    const conexao = this.dbService.getConexao();
+
+    for (const visita of visitas) {
+      await conexao.run(
+        'INSERT INTO lancamento_visita (id_lancamento, nome, instrumento) VALUES (?, ?, ?)',
+        [lancamentoId, visita.nome?.trim() || null, visita.instrumento]
+      );
     }
   }
 }

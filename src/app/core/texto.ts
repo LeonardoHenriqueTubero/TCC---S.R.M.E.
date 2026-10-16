@@ -19,3 +19,15 @@ export function contemTermo(termo: string, ...campos: (string | null | undefined
   }
   return campos.some((campo) => campo != null && normalizar(campo).includes(procurado));
 }
+
+export function nomearVisitas<T extends { nome: string | null }>(
+  visitas: T[]
+): (T & { nome: string; anonima: boolean })[] {
+  let semNome = 0;
+  return visitas.map((visita) => {
+    const nome = visita.nome?.trim();
+    return nome
+      ? { ...visita, nome, anonima: false }
+      : { ...visita, nome: `Visita ${++semNome}`, anonima: true };
+  });
+}

@@ -213,6 +213,15 @@ export class Database {
         FOREIGN KEY (id_lancamento) REFERENCES lancamento(id),
         FOREIGN KEY (id_musico) REFERENCES musico(id)
       );
+
+      CREATE TABLE IF NOT EXISTS lancamento_visita (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_lancamento INTEGER NOT NULL,
+        nome VARCHAR(100),
+        instrumento INTEGER,
+        FOREIGN KEY (id_lancamento) REFERENCES lancamento(id),
+        FOREIGN KEY (instrumento) REFERENCES instrumento(id)
+      );
     `;
     await this.db.execute(sql);
   }

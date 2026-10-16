@@ -12,9 +12,21 @@
 }
 
 .resumo-musicos .quantidade {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.3em;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--srme-texto-suave);
+}
+
+.resumo-musicos .parte,
+.resumo-musicos ion-button {
+  white-space: nowrap;
+}
+
+.resumo-musicos ion-button {
+  flex-shrink: 0;
 }
 
 .rol-musicos {

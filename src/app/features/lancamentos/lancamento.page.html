@@ -92,7 +92,11 @@
               <ion-card-content>
                 @if (lancamento.musicos.length > 0) {
                   <div class="resumo-musicos">
-                    <span class="quantidade">{{ resumoMusicos(lancamento) }}</span>
+                    <span class="quantidade">
+                      @for (parte of resumoMusicos(lancamento); track $index) {
+                        <span class="parte">{{ $index > 0 ? '- ' : '' }}{{ parte }}</span>
+                      }
+                    </span>
                     <ion-button
                       fill="clear"
                       size="small"
@@ -115,6 +119,16 @@
                             <ion-label>
                               <h2>{{ musico.nome }}</h2>
                               <p>{{ musico.instrumentoNome ?? '—' }}</p>
+                            </ion-label>
+                          </ion-item>
+                        }
+                        @for (visita of lancamento.visitas; track $index) {
+                          <ion-item>
+                            <ion-label>
+                              <h2>{{ visita.nome }}</h2>
+                              <p>
+                                {{ visita.anonima ? '' : 'Visita · ' }}{{ visita.instrumentoNome ?? '—' }}
+                              </p>
                             </ion-label>
                           </ion-item>
                         }
