@@ -1,13 +1,32 @@
-import { Component, ElementRef, OnDestroy, inject, input, output } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, inject, input, output } from '@angular/core';
 import { IonButton, IonButtons, IonHeader, IonIcon, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { downloadOutline, printOutline } from 'ionicons/icons';
-import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
+import {
+  Relatorio,
+  SecaoRelatorio,
+  ehColunaDeGrupo,
+  inicioDosGrupos,
+} from '../../shared/services/pdf.service';
 
 addIcons({ downloadOutline, printOutline });
 
 const AREA_IMPRESSAO = 'area-impressao';
 const PAGINA_IMPRESSAO = 'pagina-impressao';
+
+interface CelulaDoCabecalho {
+  texto: string;
+  linhas: number;
+  colunas: number;
+  centro: boolean;
+  divisa: boolean;
+}
+
+interface FormatoDaSecao {
+  cabecalho: CelulaDoCabecalho[][];
+  divisas: Set<number>;
+  compactas: Set<number>;
+}
 
 @Component({
   selector: 'app-visualizacao-relatorio',
@@ -46,29 +65,48 @@ const PAGINA_IMPRESSAO = 'pagina-impressao';
           <p class="subtitulo">{{ relatorio().subtitulo }}</p>
         }
 
-        @for (secao of relatorio().secoes; track $index) {
+        @for (secao of relatorio().secoes; track $index; let s = $index) {
+          @let formato = formatos()[s];
           <section [class.nova-pagina]="secao.novaPagina">
             @if (secao.titulo) {
               <h2>{{ secao.titulo }}</h2>
             }
             <table>
               <thead>
-                <tr>
-                  @for (coluna of secao.colunas; track $index) {
-                    <th [class.centro]="centralizada(secao, $index)">{{ coluna }}</th>
-                  }
-                </tr>
+                @for (linha of formato.cabecalho; track $index) {
+                  <tr>
+                    @for (celula of linha; track $index) {
+                      <th
+                        [attr.rowspan]="celula.linhas > 1 ? celula.linhas : null"
+                        [attr.colspan]="celula.colunas > 1 ? celula.colunas : null"
+                        [class.centro]="celula.centro"
+                        [class.divisa]="celula.divisa"
+                      >
+                        {{ celula.texto }}
+                      </th>
+                    }
+                  </tr>
+                }
               </thead>
               <tbody>
                 @for (linha of secao.linhas; track $index) {
                   <tr>
                     @for (celula of linha; track $index) {
-                      <td [class.centro]="centralizada(secao, $index)">{{ celula }}</td>
+                      <td
+                        [class.centro]="centralizada(secao, $index)"
+                        [class.divisa]="formato.divisas.has($index)"
+                        [class.compacta]="formato.compactas.has($index)"
+                      >
+                        {{ celula }}
+                      </td>
                     }
                   </tr>
                 }
               </tbody>
             </table>
+            @if (secao.legenda) {
+              <p class="legenda">{{ secao.legenda }}</p>
+            }
           </section>
         }
 
@@ -179,6 +217,24 @@ const PAGINA_IMPRESSAO = 'pagina-impressao';
       text-align: center;
     }
 
+    th.divisa {
+      border-left: 1.5px solid #fff;
+    }
+
+    td.divisa {
+      border-left: 1px solid #6b7684;
+    }
+
+    td.compacta {
+      padding-inline: 3px;
+    }
+
+    .legenda {
+      margin: 6px 0 0;
+      color: #6b7684;
+      font-size: 11px;
+    }
+
     td {
       border-bottom: 1px solid #d6dfe8;
     }
@@ -216,6 +272,61 @@ export class VisualizacaoRelatorioComponent implements OnDestroy {
   protected readonly MARCA = 'SRME';
 
   private readonly elemento = inject(ElementRef<HTMLElement>);
+
+  protected readonly formatos = computed(() =>
+    this.relatorio().secoes.map((secao) => this.formatar(secao))
+  );
+
+  private formatar(secao: SecaoRelatorio): FormatoDaSecao {
+    const inicios = inicioDosGrupos(secao);
+    const primeira = secao.repetirColunas ?? 0;
+    const divisas = new Set([...inicios].filter((coluna) => coluna !== primeira));
+    const compactas = new Set(
+      secao.colunas.map((_, indice) => indice).filter((indice) => ehColunaDeGrupo(secao, indice))
+    );
+
+    const celula = (indice: number, linhas = 1): CelulaDoCabecalho => ({
+      texto: secao.colunas[indice],
+      linhas,
+      colunas: 1,
+      centro: this.centralizada(secao, indice),
+      divisa: divisas.has(indice),
+    });
+
+    if (!secao.grupos) {
+      return { cabecalho: [secao.colunas.map((_, indice) => celula(indice))], divisas, compactas };
+    }
+
+    const fim = secao.colunas.length - (secao.colunasFinais ?? 0);
+    const indices = (de: number, ate: number): number[] =>
+      Array.from({ length: ate - de }, (_, i) => de + i);
+
+    let coluna = primeira;
+    const titulos = secao.grupos.map((grupo) => {
+      const titulo: CelulaDoCabecalho = {
+        texto: grupo.titulo,
+        linhas: 1,
+        colunas: grupo.colunas,
+        centro: true,
+        divisa: divisas.has(coluna),
+      };
+      coluna += grupo.colunas;
+      return titulo;
+    });
+
+    return {
+      cabecalho: [
+        [
+          ...indices(0, primeira).map((i) => celula(i, 2)),
+          ...titulos,
+          ...indices(fim, secao.colunas.length).map((i) => celula(i, 2)),
+        ],
+        indices(primeira, fim).map((i) => celula(i)),
+      ],
+      divisas,
+      compactas,
+    };
+  }
 
   protected centralizada(secao: SecaoRelatorio, indice: number): boolean {
     return secao.centralizarAPartirDe !== undefined && indice >= secao.centralizarAPartirDe;

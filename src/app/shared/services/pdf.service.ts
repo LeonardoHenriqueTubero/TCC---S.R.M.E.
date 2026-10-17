@@ -5,6 +5,11 @@ import { Share } from '@capacitor/share';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+export interface GrupoDeColunas {
+  titulo: string;
+  colunas: number;
+}
+
 export interface SecaoRelatorio {
   titulo?: string;
   colunas: string[];
@@ -12,7 +17,25 @@ export interface SecaoRelatorio {
   centralizarAPartirDe?: number;
   repetirColunas?: number;
   colunasFinais?: number;
+  grupos?: GrupoDeColunas[];
+  legenda?: string;
   novaPagina?: boolean;
+}
+
+export function inicioDosGrupos(secao: SecaoRelatorio): Set<number> {
+  const inicios = new Set<number>();
+  let coluna = secao.repetirColunas ?? 0;
+  for (const grupo of secao.grupos ?? []) {
+    inicios.add(coluna);
+    coluna += grupo.colunas;
+  }
+  return inicios;
+}
+
+export function ehColunaDeGrupo(secao: SecaoRelatorio, indice: number): boolean {
+  const inicio = secao.repetirColunas ?? 0;
+  const fim = secao.colunas.length - (secao.colunasFinais ?? 0);
+  return secao.grupos !== undefined && indice >= inicio && indice < fim;
 }
 
 export interface Relatorio {
@@ -33,6 +56,7 @@ const ALTURA_TARJA = 28;
 
 const FONTE_TABELA = 9;
 const PREENCHIMENTO_CELULA = 2.2;
+const PREENCHIMENTO_COMPACTO = 1;
 
 const AZUL: [number, number, number] = [30, 90, 142];
 const DOURADO: [number, number, number] = [200, 138, 46];
@@ -41,6 +65,14 @@ const CINZA: [number, number, number] = [107, 118, 132];
 const AZUL_CLARO: [number, number, number] = [186, 205, 222];
 const LINHA: [number, number, number] = [214, 223, 232];
 const FUNDO_ALTERNADO: [number, number, number] = [240, 244, 249];
+const BRANCO: [number, number, number] = [255, 255, 255];
+
+interface CelulaDeCabecalho {
+  content: string;
+  rowSpan?: number;
+  colSpan?: number;
+  styles?: { halign: 'center' };
+}
 
 @Injectable({
   providedIn: 'root',
@@ -138,10 +170,13 @@ export class PdfService {
       y += 8;
     }
 
+    const inicios = inicioDosGrupos(secao);
+    const primeiraColunaDeGrupo = secao.repetirColunas ?? 0;
+
     autoTable(doc, {
       startY: y + 2,
       showHead: 'everyPage',
-      head: [secao.colunas],
+      head: this.montarCabecalho(secao),
       body: secao.linhas.map((linha) => linha.map((celula) => String(celula))),
       margin: { top: TOPO_CONTINUACAO, bottom: RODAPE, left: MARGEM, right: MARGEM },
       theme: 'plain',
@@ -168,10 +203,72 @@ export class PdfService {
         if (inicio !== undefined && celula.column.index >= inicio) {
           celula.cell.styles.halign = 'center';
         }
+        if (ehColunaDeGrupo(secao, celula.column.index)) {
+          celula.cell.styles.cellPadding = {
+            top: PREENCHIMENTO_CELULA,
+            bottom: PREENCHIMENTO_CELULA,
+            left: PREENCHIMENTO_COMPACTO,
+            right: PREENCHIMENTO_COMPACTO,
+          };
+        }
+      },
+      didDrawCell: (celula) => {
+        const coluna = celula.column.index;
+        if (!inicios.has(coluna) || coluna === primeiraColunaDeGrupo) {
+          return;
+        }
+        const noCabecalho = celula.section === 'head';
+        doc.setDrawColor(...(noCabecalho ? BRANCO : CINZA));
+        doc.setLineWidth(noCabecalho ? 0.4 : 0.3);
+        doc.line(celula.cell.x, celula.cell.y, celula.cell.x, celula.cell.y + celula.cell.height);
       },
     });
 
-    return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+    let final = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+
+    if (secao.legenda) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...CINZA);
+      const linhas = doc.splitTextToSize(
+        secao.legenda,
+        doc.internal.pageSize.getWidth() - MARGEM * 2
+      ) as string[];
+      if (final + 4 + linhas.length * 3.6 > doc.internal.pageSize.getHeight() - RODAPE) {
+        doc.addPage();
+        final = TOPO_CONTINUACAO - 4;
+      }
+      doc.text(linhas, MARGEM, final + 5);
+      final += 4 + linhas.length * 3.6;
+    }
+
+    return final + 8;
+  }
+
+  private montarCabecalho(secao: SecaoRelatorio): (string | CelulaDeCabecalho)[][] {
+    if (!secao.grupos) {
+      return [secao.colunas];
+    }
+
+    const inicio = secao.repetirColunas ?? 0;
+    const fim = secao.colunas.length - (secao.colunasFinais ?? 0);
+    const deDuasLinhas = (indice: number): CelulaDeCabecalho => ({
+      content: secao.colunas[indice],
+      rowSpan: 2,
+    });
+
+    return [
+      [
+        ...secao.colunas.slice(0, inicio).map((_, indice) => deDuasLinhas(indice)),
+        ...secao.grupos.map((grupo) => ({
+          content: grupo.titulo,
+          colSpan: grupo.colunas,
+          styles: { halign: 'center' as const },
+        })),
+        ...secao.colunas.slice(fim).map((_, indice) => deDuasLinhas(fim + indice)),
+      ],
+      secao.colunas.slice(inicio, fim),
+    ];
   }
 
   private dividirColunas(doc: jsPDF, secao: SecaoRelatorio): SecaoRelatorio[] {
@@ -188,36 +285,52 @@ export class PdfService {
 
     const repetidas = Array.from({ length: inicio }, (_, i) => i);
     const finais = Array.from({ length: secao.colunas.length - fim }, (_, i) => fim + i);
-    const meio = Array.from({ length: fim - inicio }, (_, i) => inicio + i);
+    const livre = disponivel - soma(repetidas) - soma(finais);
 
-    let grupos: number[][] = [meio];
-    for (let partes = 1; partes <= meio.length; partes++) {
-      grupos = this.repartir(meio, partes);
-      const cabem = grupos.every(
-        (grupo, indice) =>
-          soma([...repetidas, ...grupo, ...(indice === grupos.length - 1 ? finais : [])]) <=
-          disponivel
-      );
-      if (cabem) {
-        break;
+    const blocos: { titulo: string; indices: number[] }[] = [];
+    let coluna = inicio;
+    for (const grupo of secao.grupos ?? [{ titulo: '', colunas: fim - inicio }]) {
+      const indices = Array.from({ length: grupo.colunas }, (_, i) => coluna + i);
+      coluna += grupo.colunas;
+
+      let pedacos = [indices];
+      for (let partes = 1; partes <= indices.length; partes++) {
+        pedacos = this.repartir(indices, partes);
+        if (pedacos.every((pedaco) => soma(pedaco) <= livre)) {
+          break;
+        }
+      }
+      pedacos.forEach((pedaco) => blocos.push({ titulo: grupo.titulo, indices: pedaco }));
+    }
+
+    const folhas: { titulo: string; indices: number[] }[][] = [];
+    for (const bloco of blocos) {
+      const atual = folhas[folhas.length - 1];
+      const usado = atual ? soma(([] as number[]).concat(...atual.map((b) => b.indices))) : Infinity;
+      if (atual && usado + soma(bloco.indices) <= livre) {
+        atual.push(bloco);
+      } else {
+        folhas.push([bloco]);
       }
     }
 
-    if (grupos.length === 1) {
+    if (folhas.length <= 1) {
       return [secao];
     }
 
-    return grupos.map((grupo, indice) => {
-      const ultimo = indice === grupos.length - 1;
-      const colunas = [...repetidas, ...grupo, ...(ultimo ? finais : [])];
+    return folhas.map((folha, indice) => {
+      const ultima = indice === folhas.length - 1;
+      const colunas = [...repetidas, ...([] as number[]).concat(...folha.map((b) => b.indices)), ...(ultima ? finais : [])];
+      const parte = `parte ${indice + 1} de ${folhas.length}`;
       return {
         ...secao,
-        titulo: secao.titulo
-          ? `${secao.titulo} — parte ${indice + 1} de ${grupos.length}`
+        titulo: secao.titulo ? `${secao.titulo} — ${parte}` : parte[0].toUpperCase() + parte.slice(1),
+        colunas: colunas.map((c) => secao.colunas[c]),
+        linhas: secao.linhas.map((linha) => colunas.map((c) => linha[c])),
+        colunasFinais: ultima ? secao.colunasFinais : 0,
+        grupos: secao.grupos
+          ? folha.map((b) => ({ titulo: b.titulo, colunas: b.indices.length }))
           : undefined,
-        colunas: colunas.map((coluna) => secao.colunas[coluna]),
-        linhas: secao.linhas.map((linha) => colunas.map((coluna) => linha[coluna])),
-        colunasFinais: ultimo ? secao.colunasFinais : undefined,
         novaPagina: secao.novaPagina || indice > 0,
       };
     });
@@ -240,7 +353,6 @@ export class PdfService {
     [indice: number]: { cellWidth: number };
   } {
     const disponivel = doc.internal.pageSize.getWidth() - MARGEM * 2;
-    const folga = PREENCHIMENTO_CELULA * 2;
 
     const desejadas = secao.colunas.map((coluna, indice) => {
       doc.setFont('helvetica', 'bold');
@@ -252,11 +364,12 @@ export class PdfService {
         maior = Math.max(maior, doc.getTextWidth(String(linha[indice] ?? '')));
       }
 
-      return maior + folga;
+      return maior + this.folga(secao, indice);
     });
 
-    const total = desejadas.reduce((soma, largura) => soma + largura, 0);
     const minimas = secao.colunas.map((_, indice) => this.larguraMinima(doc, secao, indice));
+    minimas.forEach((minima, indice) => (desejadas[indice] = Math.max(desejadas[indice], minima)));
+    const total = desejadas.reduce((soma, largura) => soma + largura, 0);
     const somaMinimas = minimas.reduce((soma, largura) => soma + largura, 0);
 
     let finais: number[];
@@ -284,7 +397,26 @@ export class PdfService {
         inteira ? this.maiorPalavra(doc, celula, 'normal', /\n/) : this.maiorPalavra(doc, celula, 'normal')
       );
     }
-    return maior + PREENCHIMENTO_CELULA * 2;
+    return Math.max(maior + this.folga(secao, indice), this.parteDoTitulo(doc, secao, indice));
+  }
+
+  private folga(secao: SecaoRelatorio, indice: number): number {
+    return (ehColunaDeGrupo(secao, indice) ? PREENCHIMENTO_COMPACTO : PREENCHIMENTO_CELULA) * 2;
+  }
+
+  private parteDoTitulo(doc: jsPDF, secao: SecaoRelatorio, indice: number): number {
+    if (!ehColunaDeGrupo(secao, indice)) {
+      return 0;
+    }
+    let coluna = secao.repetirColunas ?? 0;
+    for (const grupo of secao.grupos ?? []) {
+      if (indice < coluna + grupo.colunas) {
+        const titulo = this.maiorPalavra(doc, grupo.titulo, 'bold', /\n/);
+        return (titulo + PREENCHIMENTO_CELULA * 2) / grupo.colunas;
+      }
+      coluna += grupo.colunas;
+    }
+    return 0;
   }
 
   private maiorPalavra(

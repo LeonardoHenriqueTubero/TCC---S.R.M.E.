@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Database } from '../database/database';
-import { nomearVisitas } from '../texto';
+import { nomearVisitas, siglas } from '../texto';
 import { Relatorio, SecaoRelatorio } from '../../shared/services/pdf.service';
 
 interface LinhaMusico {
@@ -149,52 +149,45 @@ export class RelatorioService {
       return { presentes, faltas: doPeriodo.length - presentes };
     };
 
+    const siglaDa = siglas(lancamentos.map((l) => l.casa ?? SEM_VALOR));
     const cabecalho = (l: { data: string; casa: string | null }): string => {
-      const [, mesData, dia] = l.data.split('-');
-      return porCasa ? `${dia}/${mesData}` : `${dia}/${mesData}\n${l.casa ?? SEM_VALOR}`;
+      const dia = l.data.slice(8, 10);
+      return porCasa ? dia : `${dia}\n${siglaDa.get(l.casa ?? SEM_VALOR)}`;
     };
 
+    const viraOAno = meses[0].chave.slice(0, 4) !== meses[meses.length - 1].chave.slice(0, 4);
     const mesesComDatas = meses
       .map((mes) => ({ ...mes, lancamentos: lancamentos.filter((l) => l.data.startsWith(mes.chave)) }))
       .filter((mes) => mes.lancamentos.length > 0);
+    const datas = ([] as typeof lancamentos).concat(...mesesComDatas.map((mes) => mes.lancamentos));
 
-    const secoes: SecaoRelatorio[] = mesesComDatas.map((mes, indice) => ({
-      titulo: `${mes.nome} (${this.contar(mes.lancamentos.length, 'data', 'datas')})`,
-      colunas: ['Músico', ...mes.lancamentos.map(cabecalho), 'Presenças', 'Faltas'],
-      linhas: musicos.map((musico) => {
-        const { presentes, faltas } = contarMarcas(musico, mes.lancamentos);
-        return [musico.nome, ...mes.lancamentos.map((l) => marca(l, musico)), presentes, faltas];
-      }),
-      centralizarAPartirDe: 1,
-      repetirColunas: 1,
-      colunasFinais: 2,
-      novaPagina: indice > 0,
-    }));
+    const legenda = porCasa
+      ? undefined
+      : [...siglaDa]
+          .sort(([, a], [, b]) => a.localeCompare(b))
+          .map(([casa, sigla]) => `${sigla} = ${casa}`)
+          .join('  ·  ');
 
-    if (mesesComDatas.length > 1) {
-      secoes.push({
-        titulo: 'Resumo do período',
-        colunas: [
-          'Músico',
-          ...mesesComDatas.map((mes) => `${mes.nome}\nPresenças`),
-          'Presenças',
-          'Faltas',
-          'Frequência',
-        ],
-        linhas: musicos.map((musico) => {
-          const { presentes, faltas } = contarMarcas(musico, lancamentos);
-          return [
-            musico.nome,
-            ...mesesComDatas.map((mes) => contarMarcas(musico, mes.lancamentos).presentes),
-            presentes,
-            faltas,
-            this.percentual(presentes, presentes + faltas),
+    const secoes: SecaoRelatorio[] =
+      datas.length === 0
+        ? []
+        : [
+            {
+              colunas: ['Músico', ...datas.map(cabecalho), 'Presenças', 'Faltas'],
+              linhas: musicos.map((musico) => {
+                const { presentes, faltas } = contarMarcas(musico, datas);
+                return [musico.nome, ...datas.map((l) => marca(l, musico)), presentes, faltas];
+              }),
+              grupos: mesesComDatas.map((mes) => ({
+                titulo: viraOAno ? `${mes.mes} ${mes.chave.slice(0, 4)}` : mes.mes,
+                colunas: mes.lancamentos.length,
+              })),
+              legenda: legenda ? `Casas de oração: ${legenda}` : undefined,
+              centralizarAPartirDe: 1,
+              repetirColunas: 1,
+              colunasFinais: 2,
+            },
           ];
-        }),
-        centralizarAPartirDe: 1,
-        novaPagina: true,
-      });
-    }
 
     const evento = await conexao.query('SELECT nome FROM evento WHERE id = ?;', [filtro.eventoId]);
     const nomeEvento =
@@ -224,7 +217,7 @@ export class RelatorioService {
     ano: number,
     mes: number,
     quantidade: number
-  ): { chave: string; nome: string }[] {
+  ): { chave: string; nome: string; mes: string }[] {
     return Array.from({ length: Math.min(Math.max(quantidade, 1), 3) }, (_, i) => {
       const indice = mes - 1 + i;
       const anoDoMes = ano + Math.floor(indice / 12);
@@ -232,6 +225,7 @@ export class RelatorioService {
       return {
         chave: `${anoDoMes}-${String(mesDoAno).padStart(2, '0')}`,
         nome: `${MESES[mesDoAno - 1]} de ${anoDoMes}`,
+        mes: MESES[mesDoAno - 1],
       };
     });
   }
